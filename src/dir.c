@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,9 +22,7 @@
  * SOFTWARE.
  */
 
-/**
- * $Id: dir.c 62 2006-08-11 12:05:06Z me@pekdon.net $
- *
+/*
  * Directory scanning routines.
  */
 
@@ -33,6 +31,7 @@
 #endif /* HAVE_CONFIG_H */
 
 #include <glib.h>
+#include <string.h>
 
 #include "geh.h"
 #include "dir.h"
@@ -73,9 +72,7 @@ dir_scan_start (struct file_queue *queue, gchar **files,
   ds->stop = FALSE;
 
   /* Start worker thread scanning directories and files */
-  ds->thread_work = g_thread_create ((GThreadFunc) &dir_scan_worker,
-                                     ds /* data */,
-                                     TRUE /* joinable */, NULL);
+  ds->thread_work = g_thread_create ((GThreadFunc) &dir_scan_worker, ds /* data */, TRUE /* joinable */, NULL);
 
   return ds;
 }
@@ -138,6 +135,7 @@ dir_scan_recursive (struct dir_scan *ds, const gchar *path, gint levels)
   guint added = 0;
   const gchar *name;
   GDir *dir;
+  GList *list = NULL, *it;
 
   /* Check that path is a directory */
   if (! g_file_test (path, G_FILE_TEST_IS_DIR)) {
@@ -149,33 +147,47 @@ dir_scan_recursive (struct dir_scan *ds, const gchar *path, gint levels)
   dir = g_dir_open (path, 0, NULL);
   if (!dir) {
     g_warning ("unable to open %s as directory", path);
+    return;
   }
+
+  /* Scan directory, for later sorting. */
+  while (! ds->stop && (name = g_dir_read_name (dir)) != NULL) {
+    file = g_build_filename (path, name, NULL);
+    list = g_list_prepend (list, (gpointer) file);
+  }
+  g_dir_close (dir);
+
+  /* Sort entries. */
+  list = g_list_sort (list, (GCompareFunc) &strcmp);
+
 
   /* First scan directories */
   if ((levels == -1) || (levels > 0)) {
-    while (! ds->stop && (name = g_dir_read_name (dir)) != NULL) {
-      file = g_build_filename (path, name, NULL);
-      if (g_file_test (file, G_FILE_TEST_IS_DIR)) {
-        dir_scan_recursive (ds, file, (levels == -1) ? levels : levels - 1);
+    for (it = g_list_first (list); it != NULL; it = g_list_next (it)) {
+      name = (const char*) it->data;
+      if (g_file_test (name, G_FILE_TEST_IS_DIR)) {
+        dir_scan_recursive (ds, name, (levels == -1) ? levels : levels - 1);
       }
-      g_free (file);
     }
   }
 
   /* Then rewind directory and scan files */
-  g_dir_rewind (dir);
-  while (! ds->stop && (name = g_dir_read_name (dir)) != NULL) {
-    file = g_build_filename (path, name, NULL);
-    if (g_file_test (file, G_FILE_TEST_IS_REGULAR)) {
-      file_queue_push (ds->queue, file_multi_open (file));
+  for (it = g_list_first (list); it != NULL; it = g_list_next (it)) {
+    name = (const char*) it->data;
+    if (g_file_test (name, G_FILE_TEST_IS_REGULAR)) {
+      file_queue_push (ds->queue, file_multi_open (name));
       added++;
     }
-    g_free (file);
   }
-  g_dir_close (dir);
 
   /* Add to total number of items (progress bar) */
   if (added > 0) {
     ds->file_count_inc (ds->file_count_inc_data, added);
   }
+
+  /* Cleanup */
+  for (it = g_list_first (list); it != NULL; it = g_list_next (it)) {
+    free (it->data);
+  }
+  g_list_free (list);
 }
