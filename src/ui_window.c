@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: ui_window.c 80 2006-11-13 14:08:20Z me@pekdon.net $
- *
  * UI window handling code.
  */
 
@@ -45,35 +43,21 @@ static GtkWidget *ui_window_create_menu (struct ui_window *ui);
 static void ui_window_update_image (struct ui_window *ui);
 
 /* Callbacks */
-static gboolean ui_window_callback_key_press (GtkWidget *widget,
-                                              GdkEventKey *key, gpointer data);
-static void ui_window_callback_size_allocate (GtkWidget *widget,
-                                              GtkAllocation *allocation,
-                                              gpointer data);
-static void ui_window_callback_image (GtkIconView *icon_view,
-                                      GtkTreePath *path, gpointer data);
-static void ui_window_callback_zoom (GtkWidget *widget,
-                                     GdkEventScroll *event,
-                                     gpointer user_Data);
-static void ui_window_callback_icon_edited (GtkCellRendererText *cell,
-                                            gchar *path_string, gchar *text,
-                                            gpointer data);
+static gboolean ui_window_callback_key_press (GtkWidget *widget, GdkEventKey *key, gpointer data);
+static void ui_window_callback_size_allocate (GtkWidget *widget, GtkAllocation *allocation, gpointer data);
+static void ui_window_callback_image (GtkIconView *icon_view, GtkTreePath *path, gpointer data);
+static void ui_window_callback_zoom (GtkWidget *widget, GdkEventScroll *event, gpointer user_Data);
+static void ui_window_callback_icon_edited (GtkCellRendererText *cell, gchar *path_string, 
+                                            gchar *text, gpointer data);
 
 static gboolean ui_window_callback_menu (GtkWidget *widget, GdkEvent *event);
-static void ui_window_callback_menu_zoom_fit (GtkMenuItem *item,
-                                              gpointer data);
-static void ui_window_callback_menu_zoom_in (GtkMenuItem *item,
-                                             gpointer data);
-static void ui_window_callback_menu_zoom_out (GtkMenuItem *item,
-                                              gpointer data);
-static void ui_window_callback_menu_rotate_left (GtkMenuItem *item,
-                                                 gpointer data);
-static void ui_window_callback_menu_rotate_right (GtkMenuItem *item,
-                                                 gpointer data);
-static void ui_window_callback_menu_file_save (GtkMenuItem *item,
-                                               gpointer data);
-static void ui_window_callback_menu_file_rename (GtkMenuItem *item,
-                                                 gpointer data);
+static void ui_window_callback_menu_zoom_fit (GtkMenuItem *item, gpointer data);
+static void ui_window_callback_menu_zoom_in (GtkMenuItem *item, gpointer data);
+static void ui_window_callback_menu_zoom_out (GtkMenuItem *item, gpointer data);
+static void ui_window_callback_menu_rotate_left (GtkMenuItem *item, gpointer data);
+static void ui_window_callback_menu_rotate_right (GtkMenuItem *item, gpointer data);
+static void ui_window_callback_menu_file_save (GtkMenuItem *item, gpointer data);
+static void ui_window_callback_menu_file_rename (GtkMenuItem *item, gpointer data);
 
 /**
  * Create new ui_window.
@@ -260,7 +244,7 @@ ui_window_set_mode (struct ui_window *ui, guint mode)
 
   } else if (mode == UI_WINDOW_MODE_SLIDE) {
     /* Slide-show mode, having a thumbnail height bottom border with icons */
-    gtk_paned_set_position (ui->pane, -options.thumb_side + 32);
+    gtk_paned_set_position (ui->pane, height - options.thumb_side - 64);
 
     /* Set columns to display in thumbnail mode */
     gtk_icon_view_set_columns (ui->icon_view, ui->thumbnails);
