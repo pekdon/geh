@@ -38,12 +38,11 @@
 #include "file_multi.h"
 #include "util.h"
 
-static gchar *file_fetch_img_build_url (const gchar *base,
-                                        const gchar *relative,
+static gchar *file_fetch_img_build_url (const gchar *site, const gchar *dir,
                                         const gchar *src);
 static gchar *file_fetch_img_get_img (GString *buf);
-static gchar *file_fetch_img_get_base (const gchar *uri);
-static gchar *file_fetch_img_get_relative (const gchar *uri);
+static gchar *file_fetch_img_get_site (const gchar *uri);
+static gchar *file_fetch_img_get_dir (const gchar *uri);
 
 /**
  * Extract urls for images in file (html).
@@ -55,7 +54,7 @@ GList*
 file_fetch_img_extract_links (struct file_multi *file)
 {
     gint c;
-    gchar *img, *img_url, *base, *relative;
+    gchar *img, *img_url, *site, *dir;
     FILE *fd;
     GList *urls = NULL;
     GString *buf;
@@ -70,8 +69,8 @@ file_fetch_img_extract_links (struct file_multi *file)
     }
 
     /* Get base and relative paths */
-    base = file_fetch_img_get_base (file_multi_get_uri (file));
-    relative = file_fetch_img_get_relative (file_multi_get_uri (file));
+    site = file_fetch_img_get_site (file_multi_get_uri (file));
+    dir = file_fetch_img_get_dir (file_multi_get_uri (file));
 
     /* Read input */
     while ((c = fgetc (fd)) != EOF) {
@@ -95,7 +94,7 @@ file_fetch_img_extract_links (struct file_multi *file)
             /* Get image from buffer */
             img = file_fetch_img_get_img (buf);
             if (img) {
-                img_url = file_fetch_img_build_url (base, relative, img);
+                img_url = file_fetch_img_build_url (site, dir, img);
                 urls = g_list_append (urls, img_url);
                 g_free (img);
             }
@@ -107,8 +106,8 @@ file_fetch_img_extract_links (struct file_multi *file)
 
     /* Cleanup */
     fclose (fd);
-    g_free (base);
-    g_free (relative);
+    g_free (site);
+    g_free (dir);
 
     return urls;
 }
@@ -116,19 +115,19 @@ file_fetch_img_extract_links (struct file_multi *file)
 /**
  * Builds complete url for src value.
  *
- * @param base Base value of URL.
- * @param relative Relative value of URL (current dir)
+ * @param site Site img link was extracted from.
+ * @param dir Directory in site link was extracted from.
+ * @param src img link to build full URL for.
  * @return Complete URL for src value.
  */
 gchar*
-file_fetch_img_build_url (const gchar *base, const gchar *relative,
-                          const gchar *src)
+file_fetch_img_build_url (const gchar *site, const gchar *dir, const gchar *src)
 {
     gchar *img_url;
 
     if (src[0] == '/') {
         /* Absolute URL on site */
-        img_url = g_strjoin(NULL, base, src, NULL);
+        img_url = g_strjoin(NULL, site, src, NULL);
 
     } else if ((util_stripos (src, "http://") == src)
                ||(util_stripos (src, "https://") == src)) {
@@ -137,7 +136,7 @@ file_fetch_img_build_url (const gchar *base, const gchar *relative,
 
     } else {
         /* Relative path */
-        img_url = g_strjoin (NULL, relative, "/", src, NULL);
+        img_url = g_strjoin (NULL, site, "/", dir, "/", src, NULL);
     }
 
     return img_url;
@@ -196,12 +195,12 @@ file_fetch_img_get_img (GString *buf)
  * @return Full URI.
  */
 gchar*
-file_fetch_img_get_base (const gchar *uri)
+file_fetch_img_get_site (const gchar *uri)
 {
     gchar *base;
     const gchar *end;
 
-    /* Skip http:// */
+    /* Skip http(s):// */
     end = uri + 8;
 
     /* Find first /, if it does not exist assume complete string */
@@ -222,18 +221,24 @@ file_fetch_img_get_base (const gchar *uri)
  * @return Full URI.
  */
 gchar*
-file_fetch_img_get_relative (const gchar *uri)
+file_fetch_img_get_dir (const gchar *uri)
 {
-    gchar *base;
-    const gchar *end;
+    gchar *dir;
+    const gchar *begin, *end;
 
-    /* Find first /, if it does not exist assume complete string */
-    end = strrchr (uri, '/');
-    if (end) {
-        base = g_strndup (uri, (end - uri) / sizeof (uri[0]));
+    /* Find first / skipping http(s)://, if it does not exist assume
+       empty string */
+    begin = strchr (uri + 8, '/');
+    if (begin) {
+        end = strrchr (begin + 1, '/');
+        if (end) {
+            dir = g_strndup (begin + 1, (end - begin - 1) / sizeof (begin[0]));
+        } else {
+            dir = g_strdup ("");
+        }
     } else {
-        base = g_strdup (uri);
+        dir = g_strdup ("");
     }
 
-    return base;
+    return dir;
 }
