@@ -32,6 +32,7 @@
 
 #include <glib.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "geh.h"
 #include "dir.h"

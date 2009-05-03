@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+# Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -22,8 +22,6 @@
 # SOFTWARE.
 #
 
-# $Id: Makefile.am 54 2006-08-03 14:55:56Z me@pekdon.net $
-
 # Without this GNU make is required
 AUTOMAKE_OPTIONS = foreign
 
@@ -43,7 +41,7 @@ geh_SOURCES = dir.c dir.h \
 geh_CFLAGS = -DGTK_DISABLE_DEPRECATED
 geh_LDADD = @GTK_LIBS@
 
-INCLUDES = -I../ @GTK_CFLAGS@
+INCLUDES = @GTK_CFLAGS@
 
 distclean-local:
 	rm -f *\~ .\#*

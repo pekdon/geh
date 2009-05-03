@@ -475,6 +475,7 @@ ui_window_callback_key_press (GtkWidget *widget, GdkEventKey *key,
     break;
   case GDK_s: /* Slide mode */
     ui_window_set_mode (ui, UI_WINDOW_MODE_SLIDE);
+    break;
   case GDK_S:
     ui_window_callback_menu_file_save (NULL, ui);
     break;

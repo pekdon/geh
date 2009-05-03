@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: file_multi.c 79 2006-10-17 13:54:08Z me@pekdon.net $
- *
  * Routines for opening files in multiple ways including remote
  * fetching.
  */
