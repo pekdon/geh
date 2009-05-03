@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: root.c 75 2006-09-20 15:48:45Z me@pekdon.net $
- *
  * Background image setting routines.
  */
 
@@ -149,7 +147,7 @@ root_image_set_background (GdkPixbuf *image)
   g_assert (pixmap);
 
   g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
-         "Rendering background of size %dx%d to pixmap", width, height);
+         "rendering background of size %dx%d to pixmap", width, height);
 
   gc = gdk_gc_new (pixmap);
   gdk_draw_pixbuf (pixmap, gc, image,
@@ -183,7 +181,7 @@ root_image_set_x11_background (Pixmap x11_pix, guint width, guint height)
   }
 
   g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
-         "Setting background of size %dx%d", width, height);
+         "setting background of size %dx%d", width, height);
 
   /* Get default root window and create background pixmap. */
   root = RootWindow (dpy, DefaultScreen (dpy));
@@ -267,6 +265,8 @@ root_image_create_base (const gchar *color_name)
   height = gdk_screen_get_height (screen);
 
   /* Create pixbuf */
+  g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
+         "creating background base %dx%d", width, height);
   background = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE /* alpha */,
                                8 /* bps */, width, height);
   g_assert (background);
@@ -279,7 +279,7 @@ root_image_create_base (const gchar *color_name)
     }
   } else {
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-           "Failed to parse color %s", color_name);
+           "failed to parse color %s", color_name);
   }
 
   /* Set background to parsed pixel or black if parsing failed. */
@@ -297,28 +297,33 @@ root_image_create_base (const gchar *color_name)
 void
 root_image_create_centered (GdkPixbuf *dest, GdkPixbuf *image)
 {
-  gint src_x, src_y;
-  guint src_width, src_height;
-  gint dest_x, dest_y;
-  guint dest_width, dest_height;
+  gint src_x = 0, src_y = 0;
+  gint dest_x = 0, dest_y = 0;
+  guint src_width = gdk_pixbuf_get_width (image);
+  guint src_height = gdk_pixbuf_get_height (image);
+  guint dest_width = gdk_pixbuf_get_width (dest);
+  guint dest_height = gdk_pixbuf_get_height (dest);
 
-  src_width = gdk_pixbuf_get_width (image);
-  src_height = gdk_pixbuf_get_height (image);
-  dest_width = gdk_pixbuf_get_width (dest);
-  dest_height = gdk_pixbuf_get_height (dest);
+  /* Make sure copying fits into destination. */
+  if (src_width > dest_width) {
+      src_x = (src_width - dest_width) / 2;
+  } else {
+      dest_x = (dest_width - src_width) / 2;
+  }
+  if (src_height > dest_height) {
+      src_y = (src_height - dest_height) / 2;
+  } else {
+      dest_y = (dest_height - src_height) / 2;
+  }
 
   g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
-         "Copying image of size %dx%d centered on %dx%d background",
-         src_width, src_height, dest_width, dest_height);
+         "copying image of size %dx%d+%d+%d centered on %dx%d+%d+%d",
+         src_width, src_height, src_x, src_y,
+         dest_width, dest_height, dest_x, dest_y);
 
-  src_x = 0;
-  src_y = 0;
-  dest_x = 0;
-  dest_y = 0;
-
-  gdk_pixbuf_copy_area (image,
-                        src_x, src_y, dest_width, dest_height,
-                        dest, 0 /* dest_x */, 0 /* dest_y */);
+  gdk_pixbuf_copy_area (image, src_x, src_y,
+                        MIN(dest_width, src_width), MIN(dest_height, src_height),
+                        dest, dest_x, dest_y);
 }
 
 /**
@@ -330,6 +335,17 @@ root_image_create_centered (GdkPixbuf *dest, GdkPixbuf *image)
 void
 root_image_create_scaled (GdkPixbuf *dest, GdkPixbuf *image)
 {
+  guint src_width = gdk_pixbuf_get_width (image);
+  guint src_height = gdk_pixbuf_get_height (image);
+  guint dest_width = gdk_pixbuf_get_width (dest);
+  guint dest_height = gdk_pixbuf_get_height (dest);
+
+  gdk_pixbuf_scale (image, dest,
+                    0 /* dest_x */, 0 /* dest_y */, dest_width, dest_height,
+                    0 /* offset_x */, 0  /* offset_y */,
+                    (gdouble) dest_width / src_width,
+                    (gdouble) dest_height / src_height,
+                    GDK_INTERP_BILINEAR);
 }
 
 /**
@@ -341,6 +357,8 @@ root_image_create_scaled (GdkPixbuf *dest, GdkPixbuf *image)
 void
 root_image_create_cropped (GdkPixbuf *dest, GdkPixbuf *image)
 {
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+           "cropped background mode is not yet supported");
 }
 
 /**
@@ -352,6 +370,8 @@ root_image_create_cropped (GdkPixbuf *dest, GdkPixbuf *image)
 void
 root_image_create_filled (GdkPixbuf *dest, GdkPixbuf *image)
 {
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+           "filled background mode is not yet supported");
 }
 
 /**
@@ -363,4 +383,6 @@ root_image_create_filled (GdkPixbuf *dest, GdkPixbuf *image)
 void
 root_image_create_tiled (GdkPixbuf *dest, GdkPixbuf *image)
 {
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+           "filled background mode is not yet supported");
 }

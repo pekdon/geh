@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: main.c 75 2006-09-20 15:48:45Z me@pekdon.net $
- *
  * Main routine, startup and option parsing.
  */
 
@@ -34,6 +32,7 @@
 
 #include <gtk/gtk.h>
 #include <glib/gstdio.h>
+#include <stdlib.h>
 
 #include "geh.h"
 
@@ -51,7 +50,7 @@ struct _options options = {
   NULL /* mode_str */,
   0 /* timeout */,
   FALSE /* win_nodecor */,
-  720 /* win_width */,
+  750 /* win_width */,
   740 /* win_height */,
   FALSE /* root */,
   ROOT_MODE_CENTER /* root_mode */,
@@ -86,6 +85,70 @@ static void main_print_usage (void);
 static gboolean main_timeout_quit (gpointer data);
 
 /**
+ * Parse mode _str options into their corresponding int value.
+ */
+int
+parse_str_options (void)
+{
+  /* Get mode to use */
+  if (options.mode_str) {
+    if (! g_strcasecmp ("THUMB", options.mode_str)) {
+      options.mode = UI_WINDOW_MODE_THUMB;
+    } else if (! g_strcasecmp ("FULL", options.mode_str)) {
+      options.mode = UI_WINDOW_MODE_FULL;
+    } else if (! g_strcasecmp ("SLIDE", options.mode_str)) {
+      options.mode = UI_WINDOW_MODE_SLIDE;
+    } else if (! g_strcasecmp ("ROOT", options.mode_str)) {
+      options.mode = -1;
+    } else {
+      g_warning ("invalid mode %s", options.mode_str);
+      return 1;
+    }
+  }
+
+  /* Get mode to use */
+  if (options.root_mode_str) {
+    if (! g_strcasecmp ("CENTER", options.root_mode_str)) {
+      options.root_mode = ROOT_MODE_CENTER;
+    } else if (! g_strcasecmp ("SCALE", options.root_mode_str)) {
+      options.root_mode = ROOT_MODE_SCALE;
+    } else if (! g_strcasecmp ("CROP", options.root_mode_str)) {
+      options.root_mode = ROOT_MODE_CROP;
+    } else if (! g_strcasecmp ("FILL", options.root_mode_str)) {
+      options.root_mode = ROOT_MODE_FILL;
+    } else if (! g_strcasecmp ("TILE", options.root_mode_str)) {
+      options.root_mode = ROOT_MODE_TILE;
+    } else {
+      g_warning ("invalid root mode %s", options.root_mode_str);
+      return 1;
+    }
+  }
+}
+
+/**
+ * Print usage information.
+ */
+void
+main_print_usage (void)
+{
+  g_fprintf (stderr, "Usage: %s [-bclmrst] [FILE]...\n", PACKAGE_NAME);
+  g_fprintf (stderr, "Display images and set background image\n");
+}
+
+/**
+ * Timeout function to stop geh.
+ *
+ * @param data Not used
+ * @return FALSE
+ */
+gboolean
+main_timeout_quit(gpointer data)
+{
+    gtk_main_quit ();
+    return FALSE;
+}
+
+/**
  * Main routine
  */
 int
@@ -110,6 +173,11 @@ main (int argc, char *argv[])
   g_option_context_parse (context, &argc, &argv, NULL);
   g_option_context_free (context);
 
+  /* Parse _str options after command line parsing. */
+  if (parse_str_options ()) {
+      exit (1);
+  }
+
   /* Make sure there is something to do (need input files) */
   if (options.files) {
     /* Count entries in order to determine mode */
@@ -117,7 +185,7 @@ main (int argc, char *argv[])
           ;
   } else {
     main_print_usage ();
-    return 1;
+    exit (1);
   }
 
   /* Start with init threading, gdk, i18n and gtk */
@@ -130,33 +198,13 @@ main (int argc, char *argv[])
   gtk_set_locale ();
   gtk_init (&argc, &argv);
 
-  /* Get mode to use */
-  if (options.mode_str) {
-    if (! g_strcasecmp ("THUMB", options.mode_str)) {
-      options.mode = UI_WINDOW_MODE_THUMB;
-    } else if (! g_strcasecmp ("FULL", options.mode_str)) {
-      options.mode = UI_WINDOW_MODE_FULL;
-    } else if (! g_strcasecmp ("SLIDE", options.mode_str)) {
-      options.mode = UI_WINDOW_MODE_SLIDE;
-    } else if (! g_strcasecmp ("ROOT", options.mode_str)) {
-      options.mode = -1;
-    } else {
-      g_warning ("Invalid mode %s", options.mode_str);
-      return 1;
-    }
-  }
-
   if (options.mode != -1) {
     /* Create UI window */
     ui = ui_window_new ();
 
     /* Fallback mode check */
     if (! options.mode_str) {
-      if (file_count > 1) {
-        options.mode = UI_WINDOW_MODE_SLIDE;
-      } else {
-        options.mode = UI_WINDOW_MODE_FULL;
-      }
+      options.mode = (file_count > 1) ? UI_WINDOW_MODE_SLIDE : UI_WINDOW_MODE_FULL;
     }
 
     ui_window_show (ui);
@@ -204,27 +252,4 @@ main (int argc, char *argv[])
   }
 
   return 0;
-}
-
-/**
- * Print usage information.
- */
-void
-main_print_usage (void)
-{
-  g_fprintf (stderr, "Usage: %s [-bclmrst] [FILE]...\n", PACKAGE_NAME);
-  g_fprintf (stderr, "Display images and set background image\n");
-}
-
-/**
- * Timeout function to stop geh.
- *
- * @param data Not used
- * @return FALSE
- */
-gboolean
-main_timeout_quit(gpointer data)
-{
-    gtk_main_quit ();
-    return FALSE;
 }
