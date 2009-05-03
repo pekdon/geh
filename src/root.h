@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: root.h 59 2006-08-10 09:52:56Z me@pekdon.net $
- *
  * Background image setting routines.
  */
 

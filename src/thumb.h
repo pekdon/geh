@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,8 +26,6 @@
 #define _THUMB_H_
 
 /**
- * $Id: thumb.h 63 2006-08-14 13:16:53Z me@pekdon.net $
- *
  * Thumbnail generation and caching routines.
  */
 

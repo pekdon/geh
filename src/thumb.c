@@ -1,5 +1,5 @@
 /*
- * Copyright © 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -50,9 +50,9 @@
  * Struct used to feed information back to function generating thumbnail.
  */
 struct thumb_image_info {
-  guint side; /**< Side size to generate */
-  gint width; /**< Original image width */
-  gint height; /**< Original image height */
+    guint side; /**< Side size to generate */
+    gint width; /**< Original image width */
+    gint height; /**< Original image height */
 };
 
 static GdkPixbuf *thumb_load (const gchar *path,
@@ -81,26 +81,28 @@ static void thumb_callback_size_prepared (GdkPixbufLoader *loader,
 GdkPixbuf*
 thumb_get (struct file_multi *file, guint side, gboolean cache)
 {
-  GdkPixbuf *thumb = NULL;
-  gboolean cache_ok = ((side == THUMB_DEFAULT_SIDE) || (side == THUMB_LARGE_SIDE));
-  struct thumb_image_info info = {0 /* Side */, 0 /* Width */, 0 /* Height */};
+    GdkPixbuf *thumb = NULL;
+    gboolean cache_ok = ((side == THUMB_DEFAULT_SIDE)
+                         || (side == THUMB_LARGE_SIDE));
+    struct thumb_image_info info = {0 /* Side */,
+                                    0 /* Width */, 0 /* Height */};
 
-  /* Try load cached version */
-  if (cache_ok) {
-    thumb = thumb_cache_load (file);
-  }
-
-  /* Generate thumbnail */
-  if (! thumb) {
-    info.side = side;
-
-    thumb = thumb_load (file_multi_get_path (file), &info);
-    if (thumb && cache && cache_ok) {
-      thumb_cache_save (file, thumb, &info);
+    /* Try load cached version */
+    if (cache_ok) {
+        thumb = thumb_cache_load (file);
     }
-  }
 
-  return thumb;
+    /* Generate thumbnail */
+    if (! thumb) {
+        info.side = side;
+
+        thumb = thumb_load (file_multi_get_path (file), &info);
+        if (thumb && cache && cache_ok) {
+            thumb_cache_save (file, thumb, &info);
+        }
+    }
+
+    return thumb;
 }
 
 /**
@@ -113,69 +115,69 @@ thumb_get (struct file_multi *file, guint side, gboolean cache)
 GdkPixbuf*
 thumb_load (const gchar *path, struct thumb_image_info *info)
 {
-  GdkPixbuf *thumb;
-  GdkPixbufLoader *loader;
-  GError *err = NULL;
+    GdkPixbuf *thumb;
+    GdkPixbufLoader *loader;
+    GError *err = NULL;
 
-  int fd;
-  guchar buf[THUMB_LOAD_CHUNK_SIZE];
-  size_t buf_read;
+    int fd;
+    guchar buf[THUMB_LOAD_CHUNK_SIZE];
+    size_t buf_read;
 
-  /* Create pixbuf loader */
-  loader = gdk_pixbuf_loader_new ();
+    /* Create pixbuf loader */
+    loader = gdk_pixbuf_loader_new ();
 
-  /* Set callback so the image can be loaded at prefered size with
-     aspect preserved. */
-  g_signal_connect (G_OBJECT (loader), "size-prepared",
-                    G_CALLBACK (thumb_callback_size_prepared), info);
+    /* Set callback so the image can be loaded at prefered size with
+       aspect preserved. */
+    g_signal_connect (G_OBJECT (loader), "size-prepared",
+                      G_CALLBACK (thumb_callback_size_prepared), info);
 
-  /* Open file for reading */
-  fd = open (path, O_RDONLY);
-  if (fd == -1) {
-    g_warning ("failed to open %s for reading", path);
-    return NULL;
-  }
-
-  /* Read all of file and write to loader */
-  while ((buf_read = read (fd, buf, THUMB_LOAD_CHUNK_SIZE)) > 0) {
-    if (! gdk_pixbuf_loader_write (loader, buf, buf_read, &err)) {
-      /* Clean resources */
-      gdk_pixbuf_loader_close (loader, NULL);
-      g_object_unref (loader);
-      close (fd);
-
-      if (err) {
-        g_fprintf (stderr, "%s\n", err->message);
-        g_error_free (err);
-      }
-
-      return NULL;
+    /* Open file for reading */
+    fd = open (path, O_RDONLY);
+    if (fd == -1) {
+        g_warning ("failed to open %s for reading", path);
+        return NULL;
     }
-  }
 
-  /* Close file after reading */
-  close (fd);
+    /* Read all of file and write to loader */
+    while ((buf_read = read (fd, buf, THUMB_LOAD_CHUNK_SIZE)) > 0) {
+        if (! gdk_pixbuf_loader_write (loader, buf, buf_read, &err)) {
+            /* Clean resources */
+            gdk_pixbuf_loader_close (loader, NULL);
+            g_object_unref (loader);
+            close (fd);
 
-  /* Finalize loading of image */
-  if (! gdk_pixbuf_loader_close (loader, &err)) {
+            if (err) {
+                g_fprintf (stderr, "%s\n", err->message);
+                g_error_free (err);
+            }
+
+            return NULL;
+        }
+    }
+
+    /* Close file after reading */
+    close (fd);
+
+    /* Finalize loading of image */
+    if (! gdk_pixbuf_loader_close (loader, &err)) {
+        g_object_unref (loader);
+
+        if (err) {
+            g_fprintf (stderr, "%s\n", err->message);
+            g_error_free (err);
+        }
+
+        return NULL;
+    }
+    
+    /* Get thumbnail */
+    thumb = gdk_pixbuf_loader_get_pixbuf (loader);
+    g_object_ref (thumb);
+
+    /* Clean resources */
     g_object_unref (loader);
 
-    if (err) {
-      g_fprintf (stderr, "%s\n", err->message);
-      g_error_free (err);
-    }
-
-    return NULL;
-  }
-    
-  /* Get thumbnail */
-  thumb = gdk_pixbuf_loader_get_pixbuf (loader);
-  g_object_ref (thumb);
-
-  /* Clean resources */
-  g_object_unref (loader);
-
-  return thumb;
+    return thumb;
 }
 
 /**
@@ -187,36 +189,36 @@ thumb_load (const gchar *path, struct thumb_image_info *info)
 GdkPixbuf*
 thumb_cache_load (struct file_multi *file)
 {
-  time_t mtime;
-  gchar *thumb_path;
-  const gchar *mtime_str;
-  GdkPixbuf *thumb = NULL;
+    time_t mtime;
+    gchar *thumb_path;
+    const gchar *mtime_str;
+    GdkPixbuf *thumb = NULL;
 
-  /* Get thumbnail file */
-  thumb_path = thumb_cache_path (file);
-  if (g_file_test (thumb_path, G_FILE_TEST_IS_REGULAR)) {
-    thumb = gdk_pixbuf_new_from_file (thumb_path, NULL);
+    /* Get thumbnail file */
+    thumb_path = thumb_cache_path (file);
+    if (g_file_test (thumb_path, G_FILE_TEST_IS_REGULAR)) {
+        thumb = gdk_pixbuf_new_from_file (thumb_path, NULL);
 
-    /* Check mtime */
-    mtime_str = gdk_pixbuf_get_option (thumb, "tEXt::Thumb::MTime");
-    if (mtime_str) {
-      mtime = strtol (mtime_str, NULL, 10);
-      if (mtime != file_multi_get_mtime (file)) {
-        /* mtime does not match, treat as invalid */
-        g_object_unref (thumb);
-        thumb = NULL;
-      }
-    } else {
-      /* No mtime to check against, treat as invalid */
-      g_object_unref (thumb);
-      thumb = NULL;
+        /* Check mtime */
+        mtime_str = gdk_pixbuf_get_option (thumb, "tEXt::Thumb::MTime");
+        if (mtime_str) {
+            mtime = strtol (mtime_str, NULL, 10);
+            if (mtime != file_multi_get_mtime (file)) {
+                /* mtime does not match, treat as invalid */
+                g_object_unref (thumb);
+                thumb = NULL;
+            }
+        } else {
+            /* No mtime to check against, treat as invalid */
+            g_object_unref (thumb);
+            thumb = NULL;
+        }
     }
-  }
 
-  /* Cleanup */
-  g_free (thumb_path);
+    /* Cleanup */
+    g_free (thumb_path);
 
-  return thumb;
+    return thumb;
 }
 
 /**
@@ -230,39 +232,40 @@ void
 thumb_cache_save (struct file_multi *file, GdkPixbuf *thumb,
                   struct thumb_image_info *info)
 {
-  gchar *thumb_path;
-  gchar *size, *mtime, *width, *height;
+    gchar *thumb_path;
+    gchar *size, *mtime, *width, *height;
 
-  /* Make sure directory for saving exists */
-  if (! thumb_cache_save_create_directory ()) {
-    return;
-  }
+    /* Make sure directory for saving exists */
+    if (! thumb_cache_save_create_directory ()) {
+        return;
+    }
 
-  /* Get string representation for file info */
-  size = g_strdup_printf ("%li", file_multi_get_size (file));
-  mtime = g_strdup_printf ("%li", file_multi_get_mtime (file));
-  width = g_strdup_printf ("%d", info->width);
-  height = g_strdup_printf ("%d", info->height);
+    /* Get string representation for file info */
+    size = g_strdup_printf ("%li", file_multi_get_size (file));
+    mtime = g_strdup_printf ("%li", file_multi_get_mtime (file));
+    width = g_strdup_printf ("%d", info->width);
+    height = g_strdup_printf ("%d", info->height);
 
-  /* Get thumbnail file */
-  thumb_path = thumb_cache_path (file);
+    /* Get thumbnail file */
+    thumb_path = thumb_cache_path (file);
 
-  if (!  gdk_pixbuf_save (thumb, thumb_path, "png", NULL,
-                          "tEXt::Thumb::URI", file_multi_get_uri (file),
-                          "tEXt::Thumb::Size", size,
-                          "tEXt::Thumb::MTime", mtime,
-                          "tEXt::Thumb::Image::Width", width,
-                          "tEXt::Thumb::Image::Height", height,
-                          NULL)) {
-    g_warning ("failed to save thumbnail for %s", file_multi_get_path (file));
-  }
+    if (!  gdk_pixbuf_save (thumb, thumb_path, "png", NULL,
+                            "tEXt::Thumb::URI", file_multi_get_uri (file),
+                            "tEXt::Thumb::Size", size,
+                            "tEXt::Thumb::MTime", mtime,
+                            "tEXt::Thumb::Image::Width", width,
+                            "tEXt::Thumb::Image::Height", height,
+                            NULL)) {
+        g_warning ("failed to save thumbnail for %s",
+                   file_multi_get_path (file));
+    }
 
-  /* Cleanup */
-  g_free (size);
-  g_free (mtime);
-  g_free (width);
-  g_free (height);
-  g_free (thumb_path);
+    /* Cleanup */
+    g_free (size);
+    g_free (mtime);
+    g_free (width);
+    g_free (height);
+    g_free (thumb_path);
 }
 
 /**
@@ -273,36 +276,36 @@ thumb_cache_save (struct file_multi *file, GdkPixbuf *thumb,
 gboolean
 thumb_cache_save_create_directory (void)
 {
-  static gboolean tried = FALSE;
-  static gboolean status = FALSE;
+    static gboolean tried = FALSE;
+    static gboolean status = FALSE;
 
-  gchar *path, *path_base;
+    gchar *path, *path_base;
 
-  if (! tried ) {
-    /* Set tried flag */
-    tried = TRUE;
+    if (! tried ) {
+        /* Set tried flag */
+        tried = TRUE;
 
-    /* Check base thumbnail dir */
-    path_base = g_strjoin (NULL, g_get_home_dir (),
-                           THUMB_CACHE_PATH_BASE, NULL);
-    if (g_file_test (path_base, G_FILE_TEST_IS_DIR)
-        || (g_mkdir (path_base, 0700) != -1)) {
-      /* Check thumbnail dir */
-      path =  g_strjoin (NULL, g_get_home_dir (),
-                         THUMB_CACHE_PATH, NULL);
+        /* Check base thumbnail dir */
+        path_base = g_strjoin (NULL, g_get_home_dir (),
+                               THUMB_CACHE_PATH_BASE, NULL);
+        if (g_file_test (path_base, G_FILE_TEST_IS_DIR)
+            || (g_mkdir (path_base, 0700) != -1)) {
+            /* Check thumbnail dir */
+            path =  g_strjoin (NULL, g_get_home_dir (),
+                               THUMB_CACHE_PATH, NULL);
 
-      if (g_file_test (path, G_FILE_TEST_IS_DIR)
-          || (g_mkdir (path, 0700) != -1)) {
-        status = TRUE;
-      }
+            if (g_file_test (path, G_FILE_TEST_IS_DIR)
+                || (g_mkdir (path, 0700) != -1)) {
+                status = TRUE;
+            }
 
-      g_free (path);
+            g_free (path);
+        }
+
+        g_free (path_base);
     }
 
-    g_free (path_base);
-  }
-
-  return status;
+    return status;
 }
 
 /**
@@ -314,20 +317,20 @@ thumb_cache_save_create_directory (void)
 gchar*
 thumb_cache_path (struct file_multi *file)
 {
-  gchar *md5, *md5_path;
+    gchar *md5, *md5_path;
 
-  /* Get md5 representation of path */
-  md5 = thumb_cache_md5_uri (file_multi_get_uri (file));
+    /* Get md5 representation of path */
+    md5 = thumb_cache_md5_uri (file_multi_get_uri (file));
 
-  /* Build path to thumb file */
-  md5_path = g_strjoin (NULL, g_get_home_dir (),
-                        THUMB_CACHE_PATH, md5, ".png", NULL);
+    /* Build path to thumb file */
+    md5_path = g_strjoin (NULL, g_get_home_dir (),
+                          THUMB_CACHE_PATH, md5, ".png", NULL);
 
 
-  /* Clean up */
-  g_free (md5);
+    /* Clean up */
+    g_free (md5);
 
-  return md5_path;
+    return md5_path;
 }
 
 /**
@@ -339,28 +342,28 @@ thumb_cache_path (struct file_multi *file)
 gchar*
 thumb_cache_md5_uri (const gchar *uri)
 {
-  gint i;
-  gchar *md5;
+    gint i;
+    gchar *md5;
 
-  md5_state_t pms;
-  md5_byte_t digest[16];
+    md5_state_t pms;
+    md5_byte_t digest[16];
 
-  /* Generate md5 sum. */
-  md5_init (&pms);
-  md5_append (&pms, (guchar*) uri, strlen (uri));
-  md5_finish (&pms, digest);
+    /* Generate md5 sum. */
+    md5_init (&pms);
+    md5_append (&pms, (guchar*) uri, strlen (uri));
+    md5_finish (&pms, digest);
 
-  /* Print md5 hex. */
-  md5 = g_malloc (sizeof (char) * 33);
+    /* Print md5 hex. */
+    md5 = g_malloc (sizeof (char) * 33);
 
-  for (i = 0; i < 16; i++) {
-    g_sprintf (md5 + i * 2, "%02x", digest[i]);
-  }
+    for (i = 0; i < 16; i++) {
+        g_sprintf (md5 + i * 2, "%02x", digest[i]);
+    }
 
-  /* Terminate string */
-  md5[32] = '\0';
+    /* Terminate string */
+    md5[32] = '\0';
   
-  return md5;
+    return md5;
 } 
 
 /**
@@ -376,20 +379,20 @@ void
 thumb_callback_size_prepared (GdkPixbufLoader *loader,
                               gint width, gint height, gpointer user_data)
 {
-  /* Get side and calculate ratio */
-  guint side = *((guint*) user_data);
-  gfloat ratio;
+    /* Get side and calculate ratio */
+    guint side = *((guint*) user_data);
+    gfloat ratio;
 
-  /* Nothing to do, image fits in thumbnail size */
-  if ((width <= side) && (height <= side)) {
-    return;
-  }
+    /* Nothing to do, image fits in thumbnail size */
+    if ((width <= side) && (height <= side)) {
+        return;
+    }
 
-  /* Calculate ratio and set loader size */
-  ratio =  (gfloat) width / (gfloat) height;
-  if (width > height) {
-    gdk_pixbuf_loader_set_size (loader, side, side / ratio);
-  } else {
-    gdk_pixbuf_loader_set_size (loader, side * ratio, side);
-  }
+    /* Calculate ratio and set loader size */
+    ratio =  (gfloat) width / (gfloat) height;
+    if (width > height) {
+        gdk_pixbuf_loader_set_size (loader, side, side / ratio);
+    } else {
+        gdk_pixbuf_loader_set_size (loader, side * ratio, side);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: file_fetch.h 59 2006-08-10 09:52:56Z me@pekdon.net $
- *
  * Routines for threaded fetching of files.
  */
 
@@ -44,16 +42,16 @@
  * File fetch worker struct.
  */
 struct file_fetch {
-  struct ui_window *ui; /**< UI window to update. */
-  struct file_queue *queue; /**< Queue to get work from and to. */
+    struct ui_window *ui; /**< UI window to update. */
+    struct file_queue *queue; /**< Queue to get work from and to. */
 
-  GThread *thread; /**< Worker thread pushing files onto thread pool. */
-  GThreadPool *pool; /**< Thread pool fetching files. */
+    GThread *thread; /**< Worker thread pushing files onto thread pool. */
+    GThreadPool *pool; /**< Thread pool fetching files. */
 
-  GHashTable *hash; /**< Hash table of fetched files. */
-  GMutex *hash_mutex; /**< Mutex for hash. */
+    GHashTable *hash; /**< Hash table of fetched files. */
+    GMutex *hash_mutex; /**< Mutex for hash. */
 
-  gboolean stop; /**< Stop flag. */
+    gboolean stop; /**< Stop flag. */
 };
 
 extern struct file_fetch *file_fetch_start (struct file_queue *queue,

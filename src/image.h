@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: image.h 61 2006-08-10 21:08:26Z me@pekdon.net $
- *
  * Image handling, represents the original image and the current
  * version (rotation, scaling etc)
  */
@@ -40,18 +38,18 @@
  * Main structure reprsenting modifiable image.
  */
 struct image {
-  GdkPixbuf *pix_orig; /**< Original image */
-  GdkPixbuf *pix_curr; /**< Current image */
+    GdkPixbuf *pix_orig; /**< Original image */
+    GdkPixbuf *pix_curr; /**< Current image */
 
-  guint width_orig; /**< Original width */
-  guint height_orig; /**< Original height */
-  guint width_r_orig; /**< Rotated width of the original size */
-  guint height_r_orig; /**< Rotated height of the original size */
-  guint width_curr; /**< Current width */
-  guint height_curr; /**< Current height */
+    guint width_orig; /**< Original width */
+    guint height_orig; /**< Original height */
+    guint width_r_orig; /**< Rotated width of the original size */
+    guint height_r_orig; /**< Rotated height of the original size */
+    guint width_curr; /**< Current width */
+    guint height_curr; /**< Current height */
 
-  guint zoom; /**< Zoom percentage. */
-  guint rotation; /**< Rotation degrees. */
+    guint zoom; /**< Zoom percentage. */
+    guint rotation; /**< Rotation degrees. */
 };
 
 struct image *image_open (const gchar *path);

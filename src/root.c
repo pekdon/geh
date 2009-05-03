@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -64,58 +64,58 @@ static void root_image_create_tiled (GdkPixbuf *dest, GdkPixbuf *image);
 gboolean
 root_image_set_image (struct file_multi *file, const gchar *color, guint mode)
 {
-  GdkPixbuf *image;
-  GdkPixbuf *background = NULL;
-  GError *err = NULL;
+    GdkPixbuf *image;
+    GdkPixbuf *background = NULL;
+    GError *err = NULL;
 
-  g_assert (file);
+    g_assert (file);
 
-  /* Default color is black */
-  if (! color) {
-    color = "#000000";
-  }
+    /* Default color is black */
+    if (! color) {
+        color = "#000000";
+    }
 
-  /* Load source file */
-  image = gdk_pixbuf_new_from_file (file_multi_get_path (file), &err);
-  if (!image || err) {
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, err->message);
-    g_free (err);
+    /* Load source file */
+    image = gdk_pixbuf_new_from_file (file_multi_get_path (file), &err);
+    if (!image || err) {
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, err->message);
+        g_free (err);
+
+        return FALSE;
+    }
+
+    /* Create base background */
+    background = root_image_create_base (color);
+
+    /* Render background */
+    switch (mode) {
+    case ROOT_MODE_CENTER:
+        root_image_create_centered (background, image);
+        break;
+    case ROOT_MODE_SCALE:
+        root_image_create_scaled (background, image);
+        break;
+    case ROOT_MODE_CROP:
+        root_image_create_cropped (background, image);
+        break;
+    case ROOT_MODE_FILL:
+        root_image_create_filled (background, image);
+        break;
+    case ROOT_MODE_TILE:
+        root_image_create_tiled (background, image);
+        break;
+    default:
+        break;
+    }
+
+    /* Set background */
+    root_image_set_background (background);
+
+    /* Cleanup */
+    g_object_unref (image);
+    g_object_unref (background);
 
     return FALSE;
-  }
-
-  /* Create base background */
-  background = root_image_create_base (color);
-
-  /* Render background */
-  switch (mode) {
-  case ROOT_MODE_CENTER:
-    root_image_create_centered (background, image);
-    break;
-  case ROOT_MODE_SCALE:
-    root_image_create_scaled (background, image);
-    break;
-  case ROOT_MODE_CROP:
-    root_image_create_cropped (background, image);
-    break;
-  case ROOT_MODE_FILL:
-    root_image_create_filled (background, image);
-    break;
-  case ROOT_MODE_TILE:
-    root_image_create_tiled (background, image);
-    break;
-  default:
-    break;
-  }
-
-  /* Set background */
-  root_image_set_background (background);
-
-  /* Cleanup */
-  g_object_unref (image);
-  g_object_unref (background);
-
-  return FALSE;
 }
 
 /**
@@ -126,37 +126,37 @@ root_image_set_image (struct file_multi *file, const gchar *color, guint mode)
 void
 root_image_set_background (GdkPixbuf *image)
 {
-  guint width, height;
-  GdkScreen *screen;
-  GdkPixmap *pixmap;
-  GdkGC *gc;
+    guint width, height;
+    GdkScreen *screen;
+    GdkPixmap *pixmap;
+    GdkGC *gc;
 
-  g_assert (image);
+    g_assert (image);
 
-  screen = gdk_screen_get_default ();
-  width = gdk_pixbuf_get_width (image);
-  height = gdk_pixbuf_get_height (image);
+    screen = gdk_screen_get_default ();
+    width = gdk_pixbuf_get_width (image);
+    height = gdk_pixbuf_get_height (image);
 
-  /* Free up resources */
-  root_image_free_background ();
+    /* Free up resources */
+    root_image_free_background ();
 
-  /* Create background */
-  pixmap = gdk_pixmap_new (gdk_screen_get_root_window (screen),
-                           width, height,
-                           gdk_screen_get_system_visual (screen)->depth);
-  g_assert (pixmap);
+    /* Create background */
+    pixmap = gdk_pixmap_new (gdk_screen_get_root_window (screen),
+                             width, height,
+                             gdk_screen_get_system_visual (screen)->depth);
+    g_assert (pixmap);
 
-  g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
-         "rendering background of size %dx%d to pixmap", width, height);
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
+           "rendering background of size %dx%d to pixmap", width, height);
 
-  gc = gdk_gc_new (pixmap);
-  gdk_draw_pixbuf (pixmap, gc, image,
-                   0 /* src_x */, 0 /* src_y */, 0 /* dest_x */, 0 /* dest_y */,
-                   width, height, 
-                   GDK_RGB_DITHER_MAX, 0 /* x_dither */, 0 /* y_dither */);
-  g_object_unref (gc);
+    gc = gdk_gc_new (pixmap);
+    gdk_draw_pixbuf (pixmap, gc, image,
+                     0 /* src_x */, 0 /* src_y */,
+                     0 /* dest_x */, 0 /* dest_y */, width, height, 
+                     GDK_RGB_DITHER_MAX, 0 /* x_dither */, 0 /* y_dither */);
+    g_object_unref (gc);
 
-  root_image_set_x11_background (GDK_PIXMAP_XID (pixmap), width, height);
+    root_image_set_x11_background (GDK_PIXMAP_XID (pixmap), width, height);
 }
 
 /**
@@ -169,45 +169,45 @@ root_image_set_background (GdkPixbuf *image)
 void
 root_image_set_x11_background (Pixmap x11_pix, guint width, guint height)
 {
-  Display *dpy;
-  Window root;
-  Pixmap pix;
+    Display *dpy;
+    Window root;
+    Pixmap pix;
 
-  /* Open up a new display to make sure that only the pixmap and
-     nothing else is saved when XSetCloseDownMode to RetainPermanent */
-  dpy = XOpenDisplay (NULL);
-  if (!dpy) {
-    g_error ("unable to reopen display");
-  }
+    /* Open up a new display to make sure that only the pixmap and
+       nothing else is saved when XSetCloseDownMode to RetainPermanent */
+    dpy = XOpenDisplay (NULL);
+    if (!dpy) {
+        g_error ("unable to reopen display");
+    }
 
-  g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
-         "setting background of size %dx%d", width, height);
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
+           "setting background of size %dx%d", width, height);
 
-  /* Get default root window and create background pixmap. */
-  root = RootWindow (dpy, DefaultScreen (dpy));
-  pix = XCreatePixmap (dpy, root, width, height,
-                       DefaultDepth (dpy, gdk_x11_get_default_screen ()));
+    /* Get default root window and create background pixmap. */
+    root = RootWindow (dpy, DefaultScreen (dpy));
+    pix = XCreatePixmap (dpy, root, width, height,
+                         DefaultDepth (dpy, gdk_x11_get_default_screen ()));
 
-  /* Copy background to resource on newly opened display. */
-  XCopyArea (dpy, x11_pix, pix, DefaultGC (dpy, DefaultScreen (dpy)),
-             0 /* src_x */, 0 /* src_y */, width, height,
-             0 /* dest_x */, 0 /* dest_y */);
+    /* Copy background to resource on newly opened display. */
+    XCopyArea (dpy, x11_pix, pix, DefaultGC (dpy, DefaultScreen (dpy)),
+               0 /* src_x */, 0 /* src_y */, width, height,
+               0 /* dest_x */, 0 /* dest_y */);
 
-  /* Set property so resources can be freed. */
-  XChangeProperty (dpy, root, XInternAtom (dpy, ROOT_ATOM_NAME, False),
-                   XA_PIXMAP, 32, PropModeReplace, (guchar*) &pix, 1);
+    /* Set property so resources can be freed. */
+    XChangeProperty (dpy, root, XInternAtom (dpy, ROOT_ATOM_NAME, False),
+                     XA_PIXMAP, 32, PropModeReplace, (guchar*) &pix, 1);
 
-  /* Set background on root window */
-  XSetWindowBackgroundPixmap (dpy, root, pix);
+    /* Set background on root window */
+    XSetWindowBackgroundPixmap (dpy, root, pix);
 
-  XClearWindow (dpy, root);
+    XClearWindow (dpy, root);
 
-  /* Set resources to stick after closing the display then close */
-  XSetCloseDownMode (dpy, RetainPermanent);
+    /* Set resources to stick after closing the display then close */
+    XSetCloseDownMode (dpy, RetainPermanent);
 
-  /* Sync and close display */
-  XSync (dpy, FALSE);
-  XCloseDisplay (dpy);
+    /* Sync and close display */
+    XSync (dpy, FALSE);
+    XCloseDisplay (dpy);
 }
 
 /**
@@ -216,31 +216,31 @@ root_image_set_x11_background (Pixmap x11_pix, guint width, guint height)
 void
 root_image_free_background (void)
 {
-  guchar *data;
-  gint actual_format, actual_length;
-  GdkAtom atom, actual_atom;
+    guchar *data;
+    gint actual_format, actual_length;
+    GdkAtom atom, actual_atom;
 
-  /* Get atom used for tracking the root pixmap. */
-  atom = gdk_atom_intern (ROOT_ATOM_NAME, TRUE);
-  if (atom == GDK_NONE) {
-    /* If the atom does not exists, it can not be set and thus there
-       can not be any resources to free. */
-    return;
-  }
-
-  /* Get property */
-  if (gdk_property_get (gdk_get_default_root_window (),
-                        atom, _GDK_MAKE_ATOM (XA_PIXMAP), 0L, 1L, FALSE,
-                        &actual_atom, &actual_format, &actual_length,
-                        &data))  {
-    if (actual_atom == _GDK_MAKE_ATOM (XA_PIXMAP)) {
-      /* Free up resources */
-      XKillClient (gdk_x11_get_default_xdisplay (), *((Pixmap*) data));
-
-    } else {
-      g_warning ("mismatching root atom type");
+    /* Get atom used for tracking the root pixmap. */
+    atom = gdk_atom_intern (ROOT_ATOM_NAME, TRUE);
+    if (atom == GDK_NONE) {
+        /* If the atom does not exists, it can not be set and thus there
+           can not be any resources to free. */
+        return;
     }
-  }
+
+    /* Get property */
+    if (gdk_property_get (gdk_get_default_root_window (),
+                          atom, _GDK_MAKE_ATOM (XA_PIXMAP), 0L, 1L, FALSE,
+                          &actual_atom, &actual_format, &actual_length,
+                          &data))  {
+        if (actual_atom == _GDK_MAKE_ATOM (XA_PIXMAP)) {
+            /* Free up resources */
+            XKillClient (gdk_x11_get_default_xdisplay (), *((Pixmap*) data));
+
+        } else {
+            g_warning ("mismatching root atom type");
+        }
+    }
 }
 
 /**
@@ -252,40 +252,41 @@ root_image_free_background (void)
 GdkPixbuf*
 root_image_create_base (const gchar *color_name)
 {
-  GdkScreen *screen;
-  GdkPixbuf *background;
-  GdkColor color;
-  guint width, height;
-  guint32 pixel = 0;
+    GdkScreen *screen;
+    GdkPixbuf *background;
+    GdkColor color;
+    guint width, height;
+    guint32 pixel = 0;
 
-  screen = gdk_screen_get_default ();
+    screen = gdk_screen_get_default ();
 
-  /* Get screen size */
-  width = gdk_screen_get_width (screen);
-  height = gdk_screen_get_height (screen);
+    /* Get screen size */
+    width = gdk_screen_get_width (screen);
+    height = gdk_screen_get_height (screen);
 
-  /* Create pixbuf */
-  g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
-         "creating background base %dx%d", width, height);
-  background = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE /* alpha */,
-                               8 /* bps */, width, height);
-  g_assert (background);
+    /* Create pixbuf */
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
+           "creating background base %dx%d", width, height);
+    background = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE /* alpha */,
+                                 8 /* bps */, width, height);
+    g_assert (background);
 
-  /* Fill background with color */
-  if (gdk_color_parse (color_name, &color)) {
-    if (gdk_colormap_alloc_color (gdk_colormap_get_system (), &color,
-                                  TRUE /* writeable */ , TRUE /* match */ )) {
-      pixel = color.pixel;
+    /* Fill background with color */
+    if (gdk_color_parse (color_name, &color)) {
+        if (gdk_colormap_alloc_color (gdk_colormap_get_system (), &color,
+                                      TRUE /* writeable */ ,
+                                      TRUE /* match */ )) {
+            pixel = color.pixel;
+        }
+    } else {
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+               "failed to parse color %s", color_name);
     }
-  } else {
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-           "failed to parse color %s", color_name);
-  }
 
-  /* Set background to parsed pixel or black if parsing failed. */
-  gdk_pixbuf_fill (background, pixel);
+    /* Set background to parsed pixel or black if parsing failed. */
+    gdk_pixbuf_fill (background, pixel);
 
-  return background;
+    return background;
 }
 
 /**
@@ -297,33 +298,34 @@ root_image_create_base (const gchar *color_name)
 void
 root_image_create_centered (GdkPixbuf *dest, GdkPixbuf *image)
 {
-  gint src_x = 0, src_y = 0;
-  gint dest_x = 0, dest_y = 0;
-  guint src_width = gdk_pixbuf_get_width (image);
-  guint src_height = gdk_pixbuf_get_height (image);
-  guint dest_width = gdk_pixbuf_get_width (dest);
-  guint dest_height = gdk_pixbuf_get_height (dest);
+    gint src_x = 0, src_y = 0;
+    gint dest_x = 0, dest_y = 0;
+    guint src_width = gdk_pixbuf_get_width (image);
+    guint src_height = gdk_pixbuf_get_height (image);
+    guint dest_width = gdk_pixbuf_get_width (dest);
+    guint dest_height = gdk_pixbuf_get_height (dest);
 
-  /* Make sure copying fits into destination. */
-  if (src_width > dest_width) {
-      src_x = (src_width - dest_width) / 2;
-  } else {
-      dest_x = (dest_width - src_width) / 2;
-  }
-  if (src_height > dest_height) {
-      src_y = (src_height - dest_height) / 2;
-  } else {
-      dest_y = (dest_height - src_height) / 2;
-  }
+    /* Make sure copying fits into destination. */
+    if (src_width > dest_width) {
+        src_x = (src_width - dest_width) / 2;
+    } else {
+        dest_x = (dest_width - src_width) / 2;
+    }
+    if (src_height > dest_height) {
+        src_y = (src_height - dest_height) / 2;
+    } else {
+        dest_y = (dest_height - src_height) / 2;
+    }
 
-  g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
-         "copying image of size %dx%d+%d+%d centered on %dx%d+%d+%d",
-         src_width, src_height, src_x, src_y,
-         dest_width, dest_height, dest_x, dest_y);
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
+           "copying image of size %dx%d+%d+%d centered on %dx%d+%d+%d",
+           src_width, src_height, src_x, src_y,
+           dest_width, dest_height, dest_x, dest_y);
 
-  gdk_pixbuf_copy_area (image, src_x, src_y,
-                        MIN(dest_width, src_width), MIN(dest_height, src_height),
-                        dest, dest_x, dest_y);
+    gdk_pixbuf_copy_area (image, src_x, src_y,
+                          MIN(dest_width, src_width),
+                          MIN(dest_height, src_height),
+                          dest, dest_x, dest_y);
 }
 
 /**
@@ -335,17 +337,17 @@ root_image_create_centered (GdkPixbuf *dest, GdkPixbuf *image)
 void
 root_image_create_scaled (GdkPixbuf *dest, GdkPixbuf *image)
 {
-  guint src_width = gdk_pixbuf_get_width (image);
-  guint src_height = gdk_pixbuf_get_height (image);
-  guint dest_width = gdk_pixbuf_get_width (dest);
-  guint dest_height = gdk_pixbuf_get_height (dest);
+    guint src_width = gdk_pixbuf_get_width (image);
+    guint src_height = gdk_pixbuf_get_height (image);
+    guint dest_width = gdk_pixbuf_get_width (dest);
+    guint dest_height = gdk_pixbuf_get_height (dest);
 
-  gdk_pixbuf_scale (image, dest,
-                    0 /* dest_x */, 0 /* dest_y */, dest_width, dest_height,
-                    0 /* offset_x */, 0  /* offset_y */,
-                    (gdouble) dest_width / src_width,
-                    (gdouble) dest_height / src_height,
-                    GDK_INTERP_BILINEAR);
+    gdk_pixbuf_scale (image, dest,
+                      0 /* dest_x */, 0 /* dest_y */, dest_width, dest_height,
+                      0 /* offset_x */, 0  /* offset_y */,
+                      (gdouble) dest_width / src_width,
+                      (gdouble) dest_height / src_height,
+                      GDK_INTERP_BILINEAR);
 }
 
 /**

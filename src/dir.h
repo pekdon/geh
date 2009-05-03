@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: dir.h 62 2006-08-11 12:05:06Z me@pekdon.net $
- *
  * Directory scanning routines.
  */
 
@@ -43,14 +41,14 @@
  * Dir scanner structure, holds thread info etc.
  */
 struct dir_scan {
-  struct file_queue *queue; /**< File queue for work thread. */
-  gchar **files; /**< NULL terminated list of files/directories. */
+    struct file_queue *queue; /**< File queue for work thread. */
+    gchar **files; /**< NULL terminated list of files/directories. */
 
-  void (*file_count_inc)(gpointer, gint); /**< File count callback. */
-  gpointer file_count_inc_data; /**< Data for count callback. */
+    void (*file_count_inc)(gpointer, gint); /**< File count callback. */
+    gpointer file_count_inc_data; /**< Data for count callback. */
 
-  GThread *thread_work; /**< Worker thread */
-  gboolean stop; /**< Stop flag */
+    GThread *thread_work; /**< Worker thread */
+    gboolean stop; /**< Stop flag */
 };
 
 extern struct dir_scan *dir_scan_start (struct file_queue *queue, gchar **files,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: file_queue.h 60 2006-08-10 12:05:42Z me@pekdon.net $
- *
  * File queue and list.
  */
 
@@ -43,16 +41,16 @@
  * Structure holding a thread safe file queue.
  */
 struct file_queue {
-  GList *list; /**< List of files */
-  GMutex *list_mutex; /**< Lock for list of files */
+    GList *list; /**< List of files */
+    GMutex *list_mutex; /**< Lock for list of files */
 
-  GAsyncQueue *queue; /**< Queue containing active files. */
+    GAsyncQueue *queue; /**< Queue containing active files. */
 
-  gint active; /**< Count of active objects. */
-  GMutex *active_mutex; /**< Lock for active count. */
-  GCond *active_cond; /**< Cond for active cout. */
+    gint active; /**< Count of active objects. */
+    GMutex *active_mutex; /**< Lock for active count. */
+    GCond *active_cond; /**< Cond for active cout. */
 
-  gboolean stop; /**< Stop flag */
+    gboolean stop; /**< Stop flag */
 };
 
 extern struct file_queue *file_queue_new (guint refs);

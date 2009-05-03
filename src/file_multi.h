@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: file_multi.h 63 2006-08-14 13:16:53Z me@pekdon.net $
- *
  * Routines for opening files in multiple ways including remote
  * fetching.
  */
@@ -49,18 +47,18 @@
  * Main structure describing a multifile.
  */
 struct file_multi {
-  gchar *name; /**< (base)name of the file. */
-  gchar *ext; /**< extenstion of the file. */
-  gchar *uri; /**< URI to the file. */
-  gchar *dir; /**< directory of the file. */
-  gchar *path; /**< path to the file. */
-  gchar *path_tmp; /**< path to the temporary storage of the file if any. */
+    gchar *name; /**< (base)name of the file. */
+    gchar *ext; /**< extenstion of the file. */
+    gchar *uri; /**< URI to the file. */
+    gchar *dir; /**< directory of the file. */
+    gchar *path; /**< path to the file. */
+    gchar *path_tmp; /**< path to the temporary storage of the file if any. */
 
-  off_t size; /**< Size of file, -1 means not yet checked. */
-  time_t mtime; /**< Mtime of file, -1 means not yet checked. */
+    off_t size; /**< Size of file, -1 means not yet checked. */
+    time_t mtime; /**< Mtime of file, -1 means not yet checked. */
 
-  guint method; /**< Method needed for fetching the file. */
-  gboolean need_fetch; /**< flag indicating wether or not it needs fetching. */
+    guint method; /**< Method needed for fetching the file. */
+    gboolean need_fetch; /**< flag indicating if fetching is needed. */
 };
 
 extern struct file_multi *file_multi_open (const gchar *path);

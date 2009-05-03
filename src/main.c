@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -45,40 +45,40 @@
 
 /* Initialize options */
 struct _options options = {
-  NULL /* file_list */,
-  -2, /* mode */
-  NULL /* mode_str */,
-  0 /* timeout */,
-  FALSE /* win_nodecor */,
-  760 /* win_width */,
-  740 /* win_height */,
-  FALSE /* root */,
-  ROOT_MODE_CENTER /* root_mode */,
-  NULL /* root_mode_str */,
-  "#000000" /* root_color */,
-  128 /* thumb_side */,
-  FALSE /* recursive */,
-  -1 /* levels */,
-  NULL /* files */
+    NULL /* file_list */,
+    -2, /* mode */
+    NULL /* mode_str */,
+    0 /* timeout */,
+    FALSE /* win_nodecor */,
+    760 /* win_width */,
+    740 /* win_height */,
+    FALSE /* root */,
+    ROOT_MODE_CENTER /* root_mode */,
+    NULL /* root_mode_str */,
+    "#000000" /* root_color */,
+    128 /* thumb_side */,
+    FALSE /* recursive */,
+    -1 /* levels */,
+    NULL /* files */
 };
 
 /**
  * Command line parsing structure.
  */
 static GOptionEntry cmdopt[] = {
-  {"background", 'b', 0, G_OPTION_ARG_NONE, &options.root, "Background mode"},
-  {"color", 'c', 0, G_OPTION_ARG_STRING, &options.root_color, "Background color"},
-  {"height", 'H', 0, G_OPTION_ARG_INT, &options.win_height, "Window height"},
-  {"levels", 'l', 0, G_OPTION_ARG_INT, &options.levels, "Levels of recursion"},
-  {"mode", 'm', 0, G_OPTION_ARG_STRING, &options.mode_str, "Image display mode"},
-  {"nodecor", 'n', 0, G_OPTION_ARG_NONE, &options.win_nodecor, "No decor for window"},
-  {"recursive", 'r', 0, G_OPTION_ARG_NONE, &options.recursive, "Recursive directory scanning"},
-  {"set", 's', 0, G_OPTION_ARG_STRING, &options.root_mode_str, "Background mode"},
-  {"thumbside", 't', 0, G_OPTION_ARG_INT, &options.thumb_side, "Thumbnail size in pixels"},
-  {"timeout", 'T', 0, G_OPTION_ARG_INT, &options.timeout, "Display window for seconds"},
-  {"width", 'W', 0, G_OPTION_ARG_INT, &options.win_width, "Window width"},
-  { G_OPTION_REMAINING, ' ', 0, G_OPTION_ARG_FILENAME_ARRAY, &options.files, "" },
-  { NULL }
+    {"background", 'b', 0, G_OPTION_ARG_NONE, &options.root, "Background mode"},
+    {"color", 'c', 0, G_OPTION_ARG_STRING, &options.root_color, "Background color"},
+    {"height", 'H', 0, G_OPTION_ARG_INT, &options.win_height, "Window height"},
+    {"levels", 'l', 0, G_OPTION_ARG_INT, &options.levels, "Levels of recursion"},
+    {"mode", 'm', 0, G_OPTION_ARG_STRING, &options.mode_str, "Image display mode"},
+    {"nodecor", 'n', 0, G_OPTION_ARG_NONE, &options.win_nodecor, "No decor for window"},
+    {"recursive", 'r', 0, G_OPTION_ARG_NONE, &options.recursive, "Recursive directory scanning"},
+    {"set", 's', 0, G_OPTION_ARG_STRING, &options.root_mode_str, "Background mode"},
+    {"thumbside", 't', 0, G_OPTION_ARG_INT, &options.thumb_side, "Thumbnail size in pixels"},
+    {"timeout", 'T', 0, G_OPTION_ARG_INT, &options.timeout, "Display window for seconds"},
+    {"width", 'W', 0, G_OPTION_ARG_INT, &options.win_width, "Window width"},
+    { G_OPTION_REMAINING, ' ', 0, G_OPTION_ARG_FILENAME_ARRAY, &options.files, "" },
+    { NULL }
 };
 
 static void main_print_usage (void);
@@ -90,39 +90,39 @@ static gboolean main_timeout_quit (gpointer data);
 int
 parse_str_options (void)
 {
-  /* Get mode to use */
-  if (options.mode_str) {
-    if (! g_strcasecmp ("THUMB", options.mode_str)) {
-      options.mode = UI_WINDOW_MODE_THUMB;
-    } else if (! g_strcasecmp ("FULL", options.mode_str)) {
-      options.mode = UI_WINDOW_MODE_FULL;
-    } else if (! g_strcasecmp ("SLIDE", options.mode_str)) {
-      options.mode = UI_WINDOW_MODE_SLIDE;
-    } else if (! g_strcasecmp ("ROOT", options.mode_str)) {
-      options.mode = -1;
-    } else {
-      g_warning ("invalid mode %s", options.mode_str);
-      return 1;
+    /* Get mode to use */
+    if (options.mode_str) {
+        if (! g_strcasecmp ("THUMB", options.mode_str)) {
+            options.mode = UI_WINDOW_MODE_THUMB;
+        } else if (! g_strcasecmp ("FULL", options.mode_str)) {
+            options.mode = UI_WINDOW_MODE_FULL;
+        } else if (! g_strcasecmp ("SLIDE", options.mode_str)) {
+            options.mode = UI_WINDOW_MODE_SLIDE;
+        } else if (! g_strcasecmp ("ROOT", options.mode_str)) {
+            options.mode = -1;
+        } else {
+            g_warning ("invalid mode %s", options.mode_str);
+            return 1;
+        }
     }
-  }
 
-  /* Get mode to use */
-  if (options.root_mode_str) {
-    if (! g_strcasecmp ("CENTER", options.root_mode_str)) {
-      options.root_mode = ROOT_MODE_CENTER;
-    } else if (! g_strcasecmp ("SCALE", options.root_mode_str)) {
-      options.root_mode = ROOT_MODE_SCALE;
-    } else if (! g_strcasecmp ("CROP", options.root_mode_str)) {
-      options.root_mode = ROOT_MODE_CROP;
-    } else if (! g_strcasecmp ("FILL", options.root_mode_str)) {
-      options.root_mode = ROOT_MODE_FILL;
-    } else if (! g_strcasecmp ("TILE", options.root_mode_str)) {
-      options.root_mode = ROOT_MODE_TILE;
-    } else {
-      g_warning ("invalid root mode %s", options.root_mode_str);
-      return 1;
+    /* Get mode to use */
+    if (options.root_mode_str) {
+        if (! g_strcasecmp ("CENTER", options.root_mode_str)) {
+            options.root_mode = ROOT_MODE_CENTER;
+        } else if (! g_strcasecmp ("SCALE", options.root_mode_str)) {
+            options.root_mode = ROOT_MODE_SCALE;
+        } else if (! g_strcasecmp ("CROP", options.root_mode_str)) {
+            options.root_mode = ROOT_MODE_CROP;
+        } else if (! g_strcasecmp ("FILL", options.root_mode_str)) {
+            options.root_mode = ROOT_MODE_FILL;
+        } else if (! g_strcasecmp ("TILE", options.root_mode_str)) {
+            options.root_mode = ROOT_MODE_TILE;
+        } else {
+            g_warning ("invalid root mode %s", options.root_mode_str);
+            return 1;
+        }
     }
-  }
 }
 
 /**
@@ -131,8 +131,8 @@ parse_str_options (void)
 void
 main_print_usage (void)
 {
-  g_fprintf (stderr, "Usage: %s [-bclmrst] [FILE]...\n", PACKAGE_NAME);
-  g_fprintf (stderr, "Display images and set background image\n");
+    g_fprintf (stderr, "Usage: %s [-bclmrst] [FILE]...\n", PACKAGE_NAME);
+    g_fprintf (stderr, "Display images and set background image\n");
 }
 
 /**
@@ -154,102 +154,103 @@ main_timeout_quit(gpointer data)
 int
 main (int argc, char *argv[])
 {
-  gint file_count = 0;
-  gboolean stop = FALSE;
+    gint file_count = 0;
+    gboolean stop = FALSE;
 
-  GList *it;
-  GOptionContext *context;
+    GList *it;
+    GOptionContext *context;
 
-  struct ui_window *ui;
-  struct dir_scan *dir_scan;
-  struct file_multi *file;
-  struct file_fetch *file_fetch;
-  struct file_queue *file_queue;
+    struct ui_window *ui;
+    struct dir_scan *dir_scan;
+    struct file_multi *file;
+    struct file_fetch *file_fetch;
+    struct file_queue *file_queue;
 
-  /* Parse command line options */
-  context = g_option_context_new ("");
-  g_option_context_add_main_entries (context, cmdopt, NULL);
-  g_option_context_add_group (context, gtk_get_option_group (TRUE));
-  g_option_context_parse (context, &argc, &argv, NULL);
-  g_option_context_free (context);
+    /* Parse command line options */
+    context = g_option_context_new ("");
+    g_option_context_add_main_entries (context, cmdopt, NULL);
+    g_option_context_add_group (context, gtk_get_option_group (TRUE));
+    g_option_context_parse (context, &argc, &argv, NULL);
+    g_option_context_free (context);
 
-  /* Parse _str options after command line parsing. */
-  if (parse_str_options ()) {
-      exit (1);
-  }
-
-  /* Make sure there is something to do (need input files) */
-  if (options.files) {
-    /* Count entries in order to determine mode */
-    for (file_count = 0; options.files[file_count] != NULL; file_count++)
-          ;
-  } else {
-    main_print_usage ();
-    exit (1);
-  }
-
-  /* Start with init threading, gdk, i18n and gtk */
-  if (!g_thread_supported ()) {
-    g_thread_init (NULL);
-  }
-
-  gdk_threads_init ();
-
-  gtk_set_locale ();
-  gtk_init (&argc, &argv);
-
-  if (options.mode != -1) {
-    /* Create UI window */
-    ui = ui_window_new ();
-
-    /* Fallback mode check */
-    if (! options.mode_str) {
-      options.mode = (file_count > 1) ? UI_WINDOW_MODE_SLIDE : UI_WINDOW_MODE_FULL;
+    /* Parse _str options after command line parsing. */
+    if (parse_str_options ()) {
+        exit (1);
     }
 
-    ui_window_show (ui);
-    ui_window_progress_set_total (ui, file_count);
-    ui_window_set_mode (ui, options.mode);
-
-    /* Scan dirs and fetch files that is added to the thumbnail view.
-       The file queue is created with one reference owned by the dir
-       scanner. */
-    file_queue = file_queue_new (1);
-    dir_scan = dir_scan_start (file_queue, options.files,
-                               &ui_window_progress_add, (gpointer) ui);
-    file_fetch = file_fetch_start (file_queue, options.file_list, ui);
-
-    if (options.timeout > 0) {
-        g_timeout_add (options.timeout * 1000, main_timeout_quit, NULL);
-    }
-
-    /* Enter main loop */
-    gdk_threads_enter ();
-    gtk_main ();
-    gdk_threads_leave ();
-
-    /* Cleanup after fetching of files */
-    dir_scan_stop (dir_scan);
-    file_fetch_stop (file_fetch);
-
-    /* Free UI after stopping of scanning as it uses UI */
-    ui_window_free (ui);
-
-    for (it = file_queue_get_list (file_queue); it; it = g_list_next (it)) {
-      file_multi_close ((struct file_multi*) it->data);
-    }
-    file_queue_free (file_queue);
-
-  } else {
-    file = file_multi_open (options.files[0]);
-    if (! file_multi_need_fetch (file) || file_multi_fetch (file, &stop)) {
-      /* Root mode */
-      root_image_set_image (file, options.root_color, options.root_mode);
+    /* Make sure there is something to do (need input files) */
+    if (options.files) {
+        /* Count entries in order to determine mode */
+        for (file_count = 0; options.files[file_count] != NULL; file_count++)
+            ;
     } else {
-      g_warning ("Failed to fetch %s", argv[argc -1 ]);
+        main_print_usage ();
+        exit (1);
     }
-    file_multi_close (file);
-  }
 
-  return 0;
+    /* Start with init threading, gdk, i18n and gtk */
+    if (!g_thread_supported ()) {
+        g_thread_init (NULL);
+    }
+
+    gdk_threads_init ();
+
+    gtk_set_locale ();
+    gtk_init (&argc, &argv);
+
+    if (options.mode != -1) {
+        /* Create UI window */
+        ui = ui_window_new ();
+
+        /* Fallback mode check */
+        if (! options.mode_str) {
+            options.mode = (file_count > 1) 
+                ? UI_WINDOW_MODE_SLIDE : UI_WINDOW_MODE_FULL;
+        }
+
+        ui_window_show (ui);
+        ui_window_progress_set_total (ui, file_count);
+        ui_window_set_mode (ui, options.mode);
+
+        /* Scan dirs and fetch files that is added to the thumbnail view.
+           The file queue is created with one reference owned by the dir
+           scanner. */
+        file_queue = file_queue_new (1);
+        dir_scan = dir_scan_start (file_queue, options.files,
+                                   &ui_window_progress_add, (gpointer) ui);
+        file_fetch = file_fetch_start (file_queue, options.file_list, ui);
+
+        if (options.timeout > 0) {
+            g_timeout_add (options.timeout * 1000, main_timeout_quit, NULL);
+        }
+
+        /* Enter main loop */
+        gdk_threads_enter ();
+        gtk_main ();
+        gdk_threads_leave ();
+
+        /* Cleanup after fetching of files */
+        dir_scan_stop (dir_scan);
+        file_fetch_stop (file_fetch);
+
+        /* Free UI after stopping of scanning as it uses UI */
+        ui_window_free (ui);
+
+        for (it = file_queue_get_list (file_queue); it; it = g_list_next (it)) {
+            file_multi_close ((struct file_multi*) it->data);
+        }
+        file_queue_free (file_queue);
+
+    } else {
+        file = file_multi_open (options.files[0]);
+        if (! file_multi_need_fetch (file) || file_multi_fetch (file, &stop)) {
+            /* Root mode */
+            root_image_set_image (file, options.root_color, options.root_mode);
+        } else {
+            g_warning ("Failed to fetch %s", argv[argc -1 ]);
+        }
+        file_multi_close (file);
+    }
+
+    return 0;
 }

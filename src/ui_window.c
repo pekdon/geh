@@ -44,24 +44,27 @@ static GtkWidget *ui_window_create_menu (struct ui_window *ui);
 static void ui_window_update_image (struct ui_window *ui);
 
 /* Callbacks */
-static gboolean ui_window_callback_key_press (GtkWidget *widget, GdkEventKey *key, gpointer data);
-static void ui_window_callback_size_allocate (GtkWidget *widget, GtkAllocation *allocation, gpointer data);
-static void ui_window_callback_image (GtkIconView *icon_view, GtkTreePath *path, gpointer data);
-static void ui_window_callback_zoom (GtkWidget *widget, GdkEventScroll *event, gpointer user_Data);
-static void ui_window_callback_icon_edited (GtkCellRendererText *cell, gchar *path_string, 
-                                            gchar *text, gpointer data);
+static gboolean callback_key_press (GtkWidget *widget,
+                                    GdkEventKey *key, gpointer data);
+static void callback_size_allocate (GtkWidget *widget,
+                                    GtkAllocation *allocation, gpointer data);
+static void callback_image (GtkIconView *icon_view, GtkTreePath *path, gpointer data);
+static void callback_zoom (GtkWidget *widget, GdkEventScroll *event, gpointer user_Data);
+static void callback_icon_edited (GtkCellRendererText *cell,
+                                  gchar *path_string, gchar *text,
+                                  gpointer data);
 
-static gboolean ui_window_callback_menu (GtkWidget *widget, GdkEvent *event);
-static void ui_window_callback_menu_zoom_fit (GtkMenuItem *item, gpointer data);
-static void ui_window_callback_menu_zoom_in (GtkMenuItem *item, gpointer data);
-static void ui_window_callback_menu_zoom_out (GtkMenuItem *item, gpointer data);
-static void ui_window_callback_menu_rotate_left (GtkMenuItem *item, gpointer data);
-static void ui_window_callback_menu_rotate_right (GtkMenuItem *item, gpointer data);
-static void ui_window_callback_menu_file_save (GtkMenuItem *item, gpointer data);
-static void ui_window_callback_menu_file_rename (GtkMenuItem *item, gpointer data);
+static gboolean callback_menu (GtkWidget *widget, GdkEvent *event);
+static void callback_menu_zoom_fit (GtkMenuItem *item, gpointer data);
+static void callback_menu_zoom_in (GtkMenuItem *item, gpointer data);
+static void callback_menu_zoom_out (GtkMenuItem *item, gpointer data);
+static void callback_menu_rotate_left (GtkMenuItem *item, gpointer data);
+static void callback_menu_rotate_right (GtkMenuItem *item, gpointer data);
+static void callback_menu_file_save (GtkMenuItem *item, gpointer data);
+static void callback_menu_file_rename (GtkMenuItem *item, gpointer data);
 
-static void ui_window_slide_next (struct ui_window *ui);
-static void ui_window_slide_prev (struct ui_window *ui);
+static void slide_next (struct ui_window *ui);
+static void slide_prev (struct ui_window *ui);
 
 /**
  * Create new ui_window.
@@ -69,119 +72,119 @@ static void ui_window_slide_prev (struct ui_window *ui);
 struct ui_window*
 ui_window_new (void)
 {
-  GtkCellRenderer *icon_rend;
-  struct ui_window *ui;
+    GtkCellRenderer *icon_rend;
+    struct ui_window *ui;
 
-  ui = g_malloc (sizeof (struct ui_window));
+    ui = g_malloc (sizeof (struct ui_window));
 
-  ui->width_alloc_prev = 0;
-  ui->height_alloc_prev = 0;
-  ui->thumbnails = 0;
-  ui->file = NULL;
-  ui->image_data = NULL;
-  ui->progress_total = 0;
-  ui->progress_step = 0.0;
+    ui->width_alloc_prev = 0;
+    ui->height_alloc_prev = 0;
+    ui->thumbnails = 0;
+    ui->file = NULL;
+    ui->image_data = NULL;
+    ui->progress_total = 0;
+    ui->progress_step = 0.0;
 
-  /* Create main UI window */
-  ui->window = GTK_WINDOW (gtk_window_new (GTK_WINDOW_TOPLEVEL));
-  if (options.win_nodecor) {
-      gtk_window_set_decorated (ui->window, FALSE);
-  }
-  if ((options.win_width > 0) && (options.win_height > 0)) {
-      gtk_window_set_default_size (ui->window,
-                                   options.win_width, options.win_height);
-  }
+    /* Create main UI window */
+    ui->window = GTK_WINDOW (gtk_window_new (GTK_WINDOW_TOPLEVEL));
+    if (options.win_nodecor) {
+        gtk_window_set_decorated (ui->window, FALSE);
+    }
+    if ((options.win_width > 0) && (options.win_height > 0)) {
+        gtk_window_set_default_size (ui->window,
+                                     options.win_width, options.win_height);
+    }
 
-  g_signal_connect (G_OBJECT (ui->window), "delete_event",
-                    G_CALLBACK (gtk_main_quit), NULL);
-  g_signal_connect (G_OBJECT (ui->window), "key_press_event",
-                    G_CALLBACK (ui_window_callback_key_press), ui);
-  g_signal_connect (G_OBJECT (ui->image_window), "key_press_event",
-                    G_CALLBACK (ui_window_callback_key_press), ui);
-  /*
-  g_signal_connect (G_OBJECT (ui->window), "size-allocate",
-                    G_CALLBACK (ui_window_callback_size_allocate), ui);
-  */
+    g_signal_connect (G_OBJECT (ui->window), "delete_event",
+                      G_CALLBACK (gtk_main_quit), NULL);
+    g_signal_connect (G_OBJECT (ui->window), "key_press_event",
+                      G_CALLBACK (callback_key_press), ui);
+    g_signal_connect (G_OBJECT (ui->image_window), "key_press_event",
+                      G_CALLBACK (callback_key_press), ui);
+    /*
+      g_signal_connect (G_OBJECT (ui->window), "size-allocate",
+      G_CALLBACK (callback_size_allocate), ui);
+    */
 
-  /* Create vertical box */
-  ui->vbox = GTK_VBOX (gtk_vbox_new (FALSE /* homogeneous */,
-                                     0 /* spacing */));
+    /* Create vertical box */
+    ui->vbox = GTK_VBOX (gtk_vbox_new (FALSE /* homogeneous */,
+                                       0 /* spacing */));
 
-  /* Create image area */
-  ui->image_window = GTK_SCROLLED_WINDOW (gtk_scrolled_window_new (NULL, NULL));
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (ui->image_window),
-                                  GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    /* Create image area */
+    ui->image_window = GTK_SCROLLED_WINDOW (gtk_scrolled_window_new (NULL, NULL));
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (ui->image_window),
+                                    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
-  /* Zoom and rotate signals on window */
-  g_signal_connect (GTK_WIDGET (ui->image_window), "scroll-event",
-                    G_CALLBACK (ui_window_callback_zoom), ui);
+    /* Zoom and rotate signals on window */
+    g_signal_connect (GTK_WIDGET (ui->image_window), "scroll-event",
+                      G_CALLBACK (callback_zoom), ui);
 
-  ui->image = GTK_IMAGE (gtk_image_new ());
+    ui->image = GTK_IMAGE (gtk_image_new ());
 
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (ui->image_window),
-                                         GTK_WIDGET (ui->image));
+    gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (ui->image_window),
+                                           GTK_WIDGET (ui->image));
 
-  /* Create store for icon view */
-  ui->icon_store = gtk_list_store_new (UI_ICON_STORE_FIELDS,
-                                       G_TYPE_POINTER, /* struct file */
-                                       G_TYPE_STRING, /* Display name */
-                                       GDK_TYPE_PIXBUF); /* Thumbnail */
+    /* Create store for icon view */
+    ui->icon_store = gtk_list_store_new (UI_ICON_STORE_FIELDS,
+                                         G_TYPE_POINTER, /* struct file */
+                                         G_TYPE_STRING, /* Display name */
+                                         GDK_TYPE_PIXBUF); /* Thumbnail */
 
-  /* Create thumbnail area */
-  ui->icon_view_window = GTK_SCROLLED_WINDOW (gtk_scrolled_window_new (NULL, NULL));
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (ui->icon_view_window),
-                                  GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    /* Create thumbnail area */
+    ui->icon_view_window = GTK_SCROLLED_WINDOW (gtk_scrolled_window_new (NULL, NULL));
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (ui->icon_view_window),
+                                    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
-  ui->icon_view = GTK_ICON_VIEW (gtk_icon_view_new_with_model (GTK_TREE_MODEL (ui->icon_store)));
+    ui->icon_view = GTK_ICON_VIEW (gtk_icon_view_new_with_model (GTK_TREE_MODEL (ui->icon_store)));
 
-  /* Map fields to view */
-  gtk_icon_view_set_item_width (ui->icon_view, options.thumb_side + UI_THUMB_PADDING);
-  gtk_icon_view_set_pixbuf_column (ui->icon_view, UI_ICON_STORE_THUMB);
+    /* Map fields to view */
+    gtk_icon_view_set_item_width (ui->icon_view, options.thumb_side + UI_THUMB_PADDING);
+    gtk_icon_view_set_pixbuf_column (ui->icon_view, UI_ICON_STORE_THUMB);
 
-  /* Make names editable */
-  icon_rend = gtk_cell_renderer_text_new ();
-  gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (ui->icon_view), icon_rend, TRUE);
-  g_object_set (icon_rend, "editable", FALSE, NULL);
-  g_signal_connect (icon_rend, "edited",
-                    G_CALLBACK (ui_window_callback_icon_edited), ui);
-  gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (ui->icon_view), icon_rend,
-                      "text", UI_ICON_STORE_NAME, NULL);
+    /* Make names editable */
+    icon_rend = gtk_cell_renderer_text_new ();
+    gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (ui->icon_view), icon_rend, TRUE);
+    g_object_set (icon_rend, "editable", FALSE, NULL);
+    g_signal_connect (icon_rend, "edited",
+                      G_CALLBACK (callback_icon_edited), ui);
+    gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (ui->icon_view), icon_rend,
+                                    "text", UI_ICON_STORE_NAME, NULL);
 
-  g_signal_connect (ui->icon_view, "item_activated",
-                    G_CALLBACK (ui_window_callback_image), ui);
+    g_signal_connect (ui->icon_view, "item_activated",
+                      G_CALLBACK (callback_image), ui);
 
-  gtk_container_add (GTK_CONTAINER (ui->icon_view_window),
-                     GTK_WIDGET (ui->icon_view));
+    gtk_container_add (GTK_CONTAINER (ui->icon_view_window),
+                       GTK_WIDGET (ui->icon_view));
 
-  /* Create and fill pane */
-  ui->pane = GTK_PANED (gtk_vpaned_new ());
+    /* Create and fill pane */
+    ui->pane = GTK_PANED (gtk_vpaned_new ());
 
-  gtk_paned_pack1 (ui->pane, GTK_WIDGET (ui->image_window),
-                   TRUE /* resize */, TRUE /* shrink */);
+    gtk_paned_pack1 (ui->pane, GTK_WIDGET (ui->image_window),
+                     TRUE /* resize */, TRUE /* shrink */);
 
-  gtk_paned_pack2 (ui->pane, GTK_WIDGET (ui->icon_view_window),
-                   TRUE /* resize */, TRUE /* shrink */);
+    gtk_paned_pack2 (ui->pane, GTK_WIDGET (ui->icon_view_window),
+                     TRUE /* resize */, TRUE /* shrink */);
 
-  /* Create progress */
-  ui->progress = GTK_PROGRESS_BAR (gtk_progress_bar_new ());
-  g_object_ref (ui->progress);
+    /* Create progress */
+    ui->progress = GTK_PROGRESS_BAR (gtk_progress_bar_new ());
+    g_object_ref (ui->progress);
 
-  /* Fill vbox */
-  gtk_box_pack_start (GTK_BOX (ui->vbox), GTK_WIDGET (ui->pane),
-                      TRUE, TRUE, 0);
-  if (! options.win_nodecor) {
-      ui_window_progress_show (ui, FALSE /* lock */);
-  }
+    /* Fill vbox */
+    gtk_box_pack_start (GTK_BOX (ui->vbox), GTK_WIDGET (ui->pane),
+                        TRUE, TRUE, 0);
+    if (! options.win_nodecor) {
+        ui_window_progress_show (ui, FALSE /* lock */);
+    }
 
-  /* Fill window */
-  gtk_container_add (GTK_CONTAINER (ui->window), GTK_WIDGET (ui->vbox));
+    /* Fill window */
+    gtk_container_add (GTK_CONTAINER (ui->window), GTK_WIDGET (ui->vbox));
 
-  /* connect our handler which will pop-up the menu */
-  g_signal_connect_swapped (ui->window, "button_press_event",
-                            G_CALLBACK (ui_window_callback_menu),
-                            ui_window_create_menu (ui));
+    /* connect our handler which will pop-up the menu */
+    g_signal_connect_swapped (ui->window, "button_press_event",
+                              G_CALLBACK (callback_menu),
+                              ui_window_create_menu (ui));
 
-  return ui;
+    return ui;
 }
 
 /**
@@ -192,17 +195,17 @@ ui_window_new (void)
 void
 ui_window_free (struct ui_window *ui)
 {
-  g_assert (ui);
+    g_assert (ui);
 
-  /* Unref explicitly ref widgets */
-  g_object_unref (ui->icon_store);
-  g_object_unref (ui->progress);
+    /* Unref explicitly ref widgets */
+    g_object_unref (ui->icon_store);
+    g_object_unref (ui->progress);
 
-  if (ui->image_data) {
-    image_close (ui->image_data);
-  }
+    if (ui->image_data) {
+        image_close (ui->image_data);
+    }
 
-  g_free (ui);
+    g_free (ui);
 }
 
 /**
@@ -213,9 +216,9 @@ ui_window_free (struct ui_window *ui)
 void
 ui_window_show (struct ui_window *ui)
 {
-  g_assert (ui);
+    g_assert (ui);
 
-  gtk_widget_show_all (GTK_WIDGET (ui->window));
+    gtk_widget_show_all (GTK_WIDGET (ui->window));
 }
 
 /**
@@ -227,9 +230,9 @@ ui_window_show (struct ui_window *ui)
 guint
 ui_window_get_mode (struct ui_window *ui)
 {
-  g_assert (ui);
+    g_assert (ui);
 
-  return ui->mode;
+    return ui->mode;
 }
 
 /**
@@ -241,42 +244,43 @@ ui_window_get_mode (struct ui_window *ui)
 void
 ui_window_set_mode (struct ui_window *ui, guint mode)
 {
-  gint max_position;
-  gint policy_h = GTK_POLICY_AUTOMATIC, policy_v = GTK_POLICY_AUTOMATIC;
+    gint max_pos, pane_pos = 0;
+    gint policy_h = GTK_POLICY_AUTOMATIC, policy_v = GTK_POLICY_AUTOMATIC;
 
-  g_assert (ui);
+    g_assert (ui);
 
-  /* Get window height, used when calculate the position of the pane */
-  g_object_get(ui->pane, "max-position", &max_position, NULL);
+    /* Get window height, used when calculate the position of the pane */
+    g_object_get(ui->pane, "max-position", &max_pos, NULL);
 
-  if (mode == UI_WINDOW_MODE_FULL) {
-    /* Full-screen mode, hiding the icon view completely */
-    gtk_paned_set_position (ui->pane, max_position);
+    if (mode == UI_WINDOW_MODE_FULL) {
+        /* Full-screen mode, hiding the icon view completely */
+        pane_pos = max_pos;
 
-  } else if (mode == UI_WINDOW_MODE_SLIDE) {
-    /* Slide-show mode, having a thumbnail height bottom border with icons */
-    gtk_paned_set_position (ui->pane, max_position - options.thumb_side - UI_SLIDE_PADDING);
+    } else if (mode == UI_WINDOW_MODE_SLIDE) {
+        /* Slide-show mode, having a thumbnail height bottom border
+           with icons */
+        pane_pos = max_pos - options.thumb_side - UI_SLIDE_PADDING;
 
-    /* Set columns to display in thumbnail mode */
-    gtk_icon_view_set_columns (ui->icon_view, ui->thumbnails); 
-    policy_h = GTK_POLICY_ALWAYS;
-    policy_v = GTK_POLICY_NEVER;
+        /* Set columns to display in thumbnail mode */
+        gtk_icon_view_set_columns (ui->icon_view, ui->thumbnails); 
+        policy_h = GTK_POLICY_ALWAYS;
+        policy_v = GTK_POLICY_NEVER;
 
-  } else if (mode == UI_WINDOW_MODE_THUMB) {
-    /* Thumbnail mode, hiding the image view completely */
-    gtk_paned_set_position (ui->pane, 0);
+    } else if (mode == UI_WINDOW_MODE_THUMB) {
+        /* Set columns to display in thumbnail mode */
+        gtk_icon_view_set_columns (ui->icon_view, -1);
+        policy_h = GTK_POLICY_NEVER;
+    }
 
-    /* Set columns to display in thumbnail mode */
-    gtk_icon_view_set_columns (ui->icon_view, -1);
-    policy_h = GTK_POLICY_NEVER;
-  }
+    gtk_paned_set_position (ui->pane, pane_pos);
 
-  /* Set scroll policy. 
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (ui->icon_view_window),
-  policy_h, policy_v); */
+    /* Set scroll policy. 
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (ui->icon_view_window),
+                                    policy_h, policy_v);
+    */
 
-  /* Store mode */
-  ui->mode = mode;
+    /* Store mode */
+    ui->mode = mode;
 }
 
 /**
@@ -291,46 +295,46 @@ void
 ui_window_set_image (struct ui_window *ui, struct file_multi *file,
                      gboolean zoom_fit, gboolean lock)
 {
-  gchar *title;
-  struct image *image_old = ui->image_data;
+    gchar *title;
+    struct image *image_old = ui->image_data;
 
-  g_assert (ui);
+    g_assert (ui);
 
-  /* Thread safety */
-  if (lock) {
-    gdk_threads_enter ();
-  }
-
-  /* Update title */
-  title = g_strdup_printf ("%s: %s",
-                           PACKAGE_NAME, file_multi_get_name (file));
-  gtk_window_set_title (ui->window, title);
-  g_free (title);
-
-  /* Open new image */
-  ui->file = file;
-  ui->image_data = image_open (file_multi_get_path (file));
-  if (ui->image_data) {
-    if (zoom_fit) {
-      /* Zoom and display file */
-      ui_window_callback_menu_zoom_fit (NULL, (void*) ui);
-    } else {
-      /* Display file */
-      ui_window_update_image (ui);
+    /* Thread safety */
+    if (lock) {
+        gdk_threads_enter ();
     }
-  } else {
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-           "Failed to activate image %s", file_multi_get_path (file));
-  }
 
-  /* Clean up resources */
-  if (image_old) {
-    image_close (image_old);
-  }
+    /* Update title */
+    title = g_strdup_printf ("%s: %s",
+                             PACKAGE_NAME, file_multi_get_name (file));
+    gtk_window_set_title (ui->window, title);
+    g_free (title);
 
-  if (lock) {
-    gdk_threads_leave ();
-  }
+    /* Open new image */
+    ui->file = file;
+    ui->image_data = image_open (file_multi_get_path (file));
+    if (ui->image_data) {
+        if (zoom_fit) {
+            /* Zoom and display file */
+            callback_menu_zoom_fit (NULL, (void*) ui);
+        } else {
+            /* Display file */
+            ui_window_update_image (ui);
+        }
+    } else {
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+               "Failed to activate image %s", file_multi_get_path (file));
+    }
+
+    /* Clean up resources */
+    if (image_old) {
+        image_close (image_old);
+    }
+
+    if (lock) {
+        gdk_threads_leave ();
+    }
 }
 
 /**
@@ -341,44 +345,43 @@ ui_window_set_image (struct ui_window *ui, struct file_multi *file,
  * @param pix Pointer to GdkPixbuf to add.
  */
 void
-ui_window_add_thumbnail (struct ui_window *ui,
-                         struct file_multi *file, GdkPixbuf *pix,
-                         gboolean lock)
+ui_window_add_thumbnail (struct ui_window *ui, struct file_multi *file,
+                         GdkPixbuf *pix, gboolean lock)
 {
-  gchar *name, *name_short;
+    gchar *name_short;
+    const gchar *name;
 
-  g_assert (ui);
+    g_assert (ui);
 
-  /* Thread safety */
-  if (lock) {
-    gdk_threads_enter ();
-  }
+    /* Thread safety */
+    if (lock) {
+        gdk_threads_enter ();
+    }
 
-  /* Set correct amount of columns */
-  ui->thumbnails++;
-  if (ui->mode != UI_WINDOW_MODE_THUMB) {
-    gtk_icon_view_set_columns (ui->icon_view, ui->thumbnails);
-  }
+    /* Set correct amount of columns */
+    ui->thumbnails++;
+    if (ui->mode != UI_WINDOW_MODE_THUMB) {
+        gtk_icon_view_set_columns (ui->icon_view, ui->thumbnails);
+    }
 
 
-  /* Limit length of name. */
-  name = name_short = file_multi_get_name (file);
-  if (strlen (name) > UI_THUMB_CHARS) {
-      name_short = g_strdup (name);
-      g_sprintf (name_short + UI_THUMB_CHARS - 4, "...");
-  }
+    /* Limit length of name. */
+    name = file_multi_get_name (file);
+    if (strlen (name) > UI_THUMB_CHARS) {
+        name = name_short = g_strdup (name);
+        g_sprintf (name_short + UI_THUMB_CHARS - 4, "...");
+    }
 
-  /* Add thumbnail */
-  gtk_list_store_append (ui->icon_store, &ui->icon_iter_add);
-  gtk_list_store_set (ui->icon_store, &ui->icon_iter_add,
-                      UI_ICON_STORE_FILE, file,
-                      UI_ICON_STORE_NAME, name_short,
-                      UI_ICON_STORE_THUMB, pix,
-                      -1);
+    /* Add thumbnail */
+    gtk_list_store_append (ui->icon_store, &ui->icon_iter_add);
+    gtk_list_store_set (ui->icon_store, &ui->icon_iter_add,
+                        UI_ICON_STORE_FILE, file,
+                        UI_ICON_STORE_NAME, name,
+                        UI_ICON_STORE_THUMB, pix, -1);
 
-  if (lock) {
-    gdk_threads_leave ();
-  }
+    if (lock) {
+        gdk_threads_leave ();
+    }
 }
 
 /**
@@ -390,78 +393,81 @@ ui_window_add_thumbnail (struct ui_window *ui,
 GtkWidget*
 ui_window_create_menu (struct ui_window *ui)
 {
-  GtkWidget *menu, *menu_file;
-  GtkWidget *item;
+    GtkWidget *menu, *menu_file;
+    GtkWidget *item;
 
-  /* Create menu */
-  menu = gtk_menu_new ();
+    /* Create menu */
+    menu = gtk_menu_new ();
 
-  /* Zoom fit */
-  item = gtk_menu_item_new_with_label ("Zoom Fit");
-  g_signal_connect (item, "activate",
-                    G_CALLBACK (ui_window_callback_menu_zoom_fit), ui);
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+    /* Zoom fit */
+    item = gtk_menu_item_new_with_label ("Zoom Fit");
+    g_signal_connect (item, "activate",
+                      G_CALLBACK (callback_menu_zoom_fit), ui);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 
-  /* Zoom in */
-  item = gtk_menu_item_new_with_label ("Zoom In");
-  g_signal_connect (item, "activate",
-                    G_CALLBACK (ui_window_callback_menu_zoom_in), ui);
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+    /* Zoom in */
+    item = gtk_menu_item_new_with_label ("Zoom In");
+    g_signal_connect (item, "activate",
+                      G_CALLBACK (callback_menu_zoom_in), ui);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 
-  /* Zoom out */
-  item = gtk_menu_item_new_with_label ("Zoom Out");
-  g_signal_connect (item, "activate",
-                    G_CALLBACK (ui_window_callback_menu_zoom_out), ui);
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+    /* Zoom out */
+    item = gtk_menu_item_new_with_label ("Zoom Out");
+    g_signal_connect (item, "activate",
+                      G_CALLBACK (callback_menu_zoom_out), ui);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 
-  /* Separator */
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), gtk_separator_menu_item_new ());
+    /* Separator */
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu),
+                           gtk_separator_menu_item_new ());
 
-  /* Rotate left */
-  item = gtk_menu_item_new_with_label ("Rotate Left");
-  g_signal_connect (item, "activate",
-                    G_CALLBACK (ui_window_callback_menu_rotate_left), ui);
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+    /* Rotate left */
+    item = gtk_menu_item_new_with_label ("Rotate Left");
+    g_signal_connect (item, "activate",
+                      G_CALLBACK (callback_menu_rotate_left), ui);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 
-  /* Rotate right */
-  item = gtk_menu_item_new_with_label ("Rotate Right");
-  g_signal_connect (item, "activate",
-                    G_CALLBACK (ui_window_callback_menu_rotate_right), ui);
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+    /* Rotate right */
+    item = gtk_menu_item_new_with_label ("Rotate Right");
+    g_signal_connect (item, "activate",
+                      G_CALLBACK (callback_menu_rotate_right), ui);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 
-  /* Separator */
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), gtk_separator_menu_item_new ());
+    /* Separator */
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu),
+                           gtk_separator_menu_item_new ());
 
-  /* Create file operation menu */
-  menu_file = gtk_menu_new ();
+    /* Create file operation menu */
+    menu_file = gtk_menu_new ();
 
-  item = gtk_menu_item_new_with_label ("Rename");
-  g_signal_connect (item, "activate",
-                    G_CALLBACK (ui_window_callback_menu_file_rename), ui);
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu_file), item);
+    item = gtk_menu_item_new_with_label ("Rename");
+    g_signal_connect (item, "activate",
+                      G_CALLBACK (callback_menu_file_rename), ui);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu_file), item);
 
-  item = gtk_menu_item_new_with_label ("Save");
-  g_signal_connect (item, "activate",
-                    G_CALLBACK (ui_window_callback_menu_file_save), ui);
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu_file), item);
+    item = gtk_menu_item_new_with_label ("Save");
+    g_signal_connect (item, "activate",
+                      G_CALLBACK (callback_menu_file_save), ui);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu_file), item);
 
-  item = gtk_menu_item_new_with_label ("File");
-  gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), menu_file);
+    item = gtk_menu_item_new_with_label ("File");
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), menu_file);
 
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 
-  /* Separator */
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), gtk_separator_menu_item_new ());
+    /* Separator */
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu),
+                           gtk_separator_menu_item_new ());
 
-  /* Quit */
-  item = gtk_menu_item_new_with_label ("Quit");
-  g_signal_connect (item, "activate", G_CALLBACK (gtk_main_quit), NULL);
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+    /* Quit */
+    item = gtk_menu_item_new_with_label ("Quit");
+    g_signal_connect (item, "activate", G_CALLBACK (gtk_main_quit), NULL);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 
-  /* Show widgets */
-  gtk_widget_show_all (menu);
+    /* Show widgets */
+    gtk_widget_show_all (menu);
 
-  return menu;
+    return menu;
 }
 
 /**
@@ -472,8 +478,8 @@ ui_window_create_menu (struct ui_window *ui)
 void
 ui_window_update_image (struct ui_window *ui)
 {
-  gtk_image_set_from_pixbuf (GTK_IMAGE (ui->image),
-                             image_get_curr (ui->image_data));
+    gtk_image_set_from_pixbuf (GTK_IMAGE (ui->image),
+                               image_get_curr (ui->image_data));
 }
 
 /**
@@ -484,51 +490,50 @@ ui_window_update_image (struct ui_window *ui)
  * @param data Pointer to struct ui_window.
  */
 gboolean
-ui_window_callback_key_press (GtkWidget *widget, GdkEventKey *key,
-                              gpointer data)
+callback_key_press (GtkWidget *widget, GdkEventKey *key, gpointer data)
 {
-  struct ui_window *ui = (struct ui_window*) data;
+    struct ui_window *ui = (struct ui_window*) data;
 
-  switch (key->keyval) {
-  case GDK_f:
-    ui_window_callback_menu_zoom_fit (NULL, ui);
-    break;
-  case GDK_F: /* Full mode */
-    ui_window_set_mode (ui, UI_WINDOW_MODE_FULL);
-    break;
-  case GDK_s: /* Slide mode */
-    ui_window_set_mode (ui, UI_WINDOW_MODE_SLIDE);
-    break;
-  case GDK_S:
-    ui_window_callback_menu_file_save (NULL, ui);
-    break;
-  case GDK_R:
-    ui_window_callback_menu_file_rename (NULL, ui);
-    break;
-  case GDK_t: /* Thumb mode */
-  case GDK_T:
-    ui_window_set_mode (ui, UI_WINDOW_MODE_THUMB);
-    break;
-  case GDK_q: /* Quit */
-  case GDK_Q:
-    gtk_main_quit ();
-    break;
-  case GDK_n:
-  case GDK_N:
-      /* Next image (if in slideshow/full mode). */
-      ui_window_slide_next (ui);
-      break;
-  case GDK_p:
-  case GDK_P:
-      /* Prev image (if in slideshow/full mode). */
-      ui_window_slide_prev (ui);      
-      break;
-  default:
-    return TRUE;
-    break;
-  }
+    switch (key->keyval) {
+    case GDK_f:
+        callback_menu_zoom_fit (NULL, ui);
+        break;
+    case GDK_F: /* Full mode */
+        ui_window_set_mode (ui, UI_WINDOW_MODE_FULL);
+        break;
+    case GDK_s: /* Slide mode */
+        ui_window_set_mode (ui, UI_WINDOW_MODE_SLIDE);
+        break;
+    case GDK_S:
+        callback_menu_file_save (NULL, ui);
+        break;
+    case GDK_R:
+        callback_menu_file_rename (NULL, ui);
+        break;
+    case GDK_t: /* Thumb mode */
+    case GDK_T:
+        ui_window_set_mode (ui, UI_WINDOW_MODE_THUMB);
+        break;
+    case GDK_q: /* Quit */
+    case GDK_Q:
+        gtk_main_quit ();
+        break;
+    case GDK_n:
+    case GDK_N:
+        /* Next image (if in slideshow/full mode). */
+        slide_next (ui);
+        break;
+    case GDK_p:
+    case GDK_P:
+        /* Prev image (if in slideshow/full mode). */
+        slide_prev (ui);      
+        break;
+    default:
+        return TRUE;
+        break;
+    }
 
-  return FALSE;
+    return FALSE;
 }
 
 /**
@@ -539,23 +544,24 @@ ui_window_callback_key_press (GtkWidget *widget, GdkEventKey *key,
  * @param data Pointer to struct ui_window.
  */
 void
-ui_window_callback_size_allocate (GtkWidget *widget, GtkAllocation *allocation,
-                                  gpointer data)
+callback_size_allocate (GtkWidget *widget, GtkAllocation *allocation,
+                        gpointer data)
 {
-  struct ui_window *ui = (struct ui_window*) data;
+    struct ui_window *ui = (struct ui_window*) data;
 
-  if ((GTK_WIDGET (ui->window) == widget)
-      && ((ui->width_alloc_prev != allocation->width)
-          || (ui->height_alloc_prev != allocation->height))) {
-    /* Size changed */
-    ui->width_alloc_prev = allocation->width;
-    ui->height_alloc_prev = allocation->height;
+    if ((GTK_WIDGET (ui->window) == widget)
+        && ((ui->width_alloc_prev != allocation->width)
+            || (ui->height_alloc_prev != allocation->height))) {
+        /* Size changed */
+        ui->width_alloc_prev = allocation->width;
+        ui->height_alloc_prev = allocation->height;
 
-    if (ui->mode == UI_WINDOW_MODE_SLIDE) {
-      /* Slide-show mode, having a thumbnail height bottom border with icons */
-      gtk_paned_set_position (ui->pane, -options.thumb_side);
+        if (ui->mode == UI_WINDOW_MODE_SLIDE) {
+            /* Slide-show mode, having a thumbnail height bottom
+               border with icons */
+            gtk_paned_set_position (ui->pane, -options.thumb_side);
+        }
     }
-  }
 }
 
 /**
@@ -566,59 +572,57 @@ ui_window_callback_size_allocate (GtkWidget *widget, GtkAllocation *allocation,
  * @param data Data.
  */
 void
-ui_window_callback_image (GtkIconView *icon_view,
-                          GtkTreePath *tree_path, gpointer data)
+callback_image (GtkIconView *icon_view, GtkTreePath *tree_path, gpointer data)
 {
-  struct ui_window *ui = (struct ui_window*) data;
-  struct file_multi *file;
+    struct ui_window *ui = (struct ui_window*) data;
+    struct file_multi *file;
 
-  /* Expand from thumb mode to slide mode. */
-  if (ui->mode == UI_WINDOW_MODE_THUMB) {
-    ui_window_set_mode (ui, UI_WINDOW_MODE_SLIDE);
-  }
+    /* Expand from thumb mode to slide mode. */
+    if (ui->mode == UI_WINDOW_MODE_THUMB) {
+        ui_window_set_mode (ui, UI_WINDOW_MODE_SLIDE);
+    }
 
-  /* Get current object */
-  gtk_tree_model_get_iter (GTK_TREE_MODEL (ui->icon_store),
-                           &ui->icon_iter, tree_path);
-  gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
-                      UI_ICON_STORE_FILE, &file, -1);
+    /* Get current object */
+    gtk_tree_model_get_iter (GTK_TREE_MODEL (ui->icon_store),
+                             &ui->icon_iter, tree_path);
+    gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
+                        UI_ICON_STORE_FILE, &file, -1);
 
-  /* Activate image */
-  /* FIXME: This seems not to zoom when switching mode from thumbnail mode */
-  ui_window_set_image (ui, file, TRUE, FALSE);
+    /* Activate image */
+    /* FIXME: This seems not to zoom when switching mode from thumbnail mode */
+    ui_window_set_image (ui, file, TRUE, FALSE);
 }
 
 /**
  * Zooms image.
  *
- * @param widget
- * @param event
- * @param user_data
+ * @param widget Not used
+ * @param event Event caused zooming.
+ * @param user_data User data, pointer to ui.
  */
 void
-ui_window_callback_zoom (GtkWidget *widget, GdkEventScroll *event,
-                         gpointer user_data)
+callback_zoom (GtkWidget *widget, GdkEventScroll *event, gpointer user_data)
 {
-  struct ui_window *ui = (struct ui_window*) user_data;
+    struct ui_window *ui = (struct ui_window*) user_data;
 
-  /* Nothing to do as there is no image */
-  if (! ui->image_data) {
-    return;
-  }
+    /* Nothing to do as there is no image */
+    if (! ui->image_data) {
+        return;
+    }
 
-  if (event->direction == GDK_SCROLL_UP) {
-    /* Zoom image */
-    image_zoom (ui->image_data, 10);
+    if (event->direction == GDK_SCROLL_UP) {
+        /* Zoom image */
+        image_zoom (ui->image_data, 10);
 
-    /* Update image displayed */
-    ui_window_update_image (ui);
-  } else if (event->direction == GDK_SCROLL_DOWN) {
-    /* Zoom image */
-    image_zoom (ui->image_data, -10);
+        /* Update image displayed */
+        ui_window_update_image (ui);
+    } else if (event->direction == GDK_SCROLL_DOWN) {
+        /* Zoom image */
+        image_zoom (ui->image_data, -10);
 
-    /* Update image displayed */
-    ui_window_update_image (ui);
-  }
+        /* Update image displayed */
+        ui_window_update_image (ui);
+    }
 }
 
 /**
@@ -630,31 +634,33 @@ ui_window_callback_zoom (GtkWidget *widget, GdkEventScroll *event,
  * @param data Pointer to struct ui_window.
  */
 void
-ui_window_callback_icon_edited (GtkCellRendererText *cell,
-                                gchar *path_string, gchar *text,
-                                gpointer data)
+callback_icon_edited (GtkCellRendererText *cell,
+                      gchar *path_string, gchar *text, gpointer data)
 {
-  struct ui_window *ui = (struct ui_window*) data;
-  struct file_multi *file;
+    struct ui_window *ui = (struct ui_window*) data;
+    struct file_multi *file;
 
-  GtkTreeIter iter;
+    GtkTreeIter iter;
 
-  /* Nothing to do */
-  if (! g_utf8_strlen (text, 2)) {
-    return;
-  }
+    /* Nothing to do */
+    if (! g_utf8_strlen (text, 2)) {
+        return;
+    }
 
-  gtk_tree_model_get_iter_from_string (GTK_TREE_MODEL (ui->icon_store),
-                                       &iter, path_string);
-  gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store),
-                      &iter, UI_ICON_STORE_FILE, &file, -1);
+    gtk_tree_model_get_iter_from_string (GTK_TREE_MODEL (ui->icon_store),
+                                         &iter, path_string);
+    gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store),
+                        &iter, UI_ICON_STORE_FILE, &file, -1);
 
-  if (file_multi_rename (file, text)) {
-    gtk_list_store_set (GTK_LIST_STORE (ui->icon_store), &iter,
-                        UI_ICON_STORE_NAME, text, -1);
+    if (file_multi_rename (file, text)) {
+        gtk_list_store_set (GTK_LIST_STORE (ui->icon_store), &iter,
+                            UI_ICON_STORE_NAME, text, -1);
 
-  } else {
-  }
+    } else {
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+               "failed to rename file from %s to %s",
+               file_multi_get_name (file), text);
+    }
 }
 
 /**
@@ -665,28 +671,28 @@ ui_window_callback_icon_edited (GtkCellRendererText *cell,
  * @return TRUE if event is handled, else FALSE.
  */
 gboolean
-ui_window_callback_menu (GtkWidget *widget, GdkEvent *event)
+callback_menu (GtkWidget *widget, GdkEvent *event)
 {
-  GtkMenu *menu;
-  GdkEventButton *event_button;
+    GtkMenu *menu;
+    GdkEventButton *event_button;
 
-  g_return_val_if_fail (widget != NULL, FALSE);
-  g_return_val_if_fail (GTK_IS_MENU (widget), FALSE);
-  g_return_val_if_fail (event != NULL, FALSE);
+    g_return_val_if_fail (widget != NULL, FALSE);
+    g_return_val_if_fail (GTK_IS_MENU (widget), FALSE);
+    g_return_val_if_fail (event != NULL, FALSE);
 
-  /* Get the menu */
-  menu = GTK_MENU (widget);
+    /* Get the menu */
+    menu = GTK_MENU (widget);
 
-  if (event->type == GDK_BUTTON_PRESS) {
-    event_button = (GdkEventButton *) event;
-    if (event_button->button == 3) {
-      gtk_menu_popup (menu, NULL, NULL, NULL, NULL, 
-                      event_button->button, event_button->time);
-      return TRUE;
+    if (event->type == GDK_BUTTON_PRESS) {
+        event_button = (GdkEventButton *) event;
+        if (event_button->button == 3) {
+            gtk_menu_popup (menu, NULL, NULL, NULL, NULL, 
+                            event_button->button, event_button->time);
+            return TRUE;
+        }
     }
-  }
 
-  return FALSE;
+    return FALSE;
 }
 
 /**
@@ -696,22 +702,22 @@ ui_window_callback_menu (GtkWidget *widget, GdkEvent *event)
  * @param data void pointer to struct ui_window.
  */
 void
-ui_window_callback_menu_zoom_fit (GtkMenuItem *item, gpointer data)
+callback_menu_zoom_fit (GtkMenuItem *item, gpointer data)
 {
-  struct ui_window *ui = (struct ui_window*) data;
+    struct ui_window *ui = (struct ui_window*) data;
 
-  /* Nothing to do as there is no image */
-  if (! ui->image_data) {
-    return;
-  }
+    /* Nothing to do as there is no image */
+    if (! ui->image_data) {
+        return;
+    }
 
-  /* Set zoom to available size */
-  image_zoom_fit (ui->image_data,
-                  GTK_WIDGET (ui->image_window)->allocation.width - 16,
-                  GTK_WIDGET (ui->image_window)->allocation.height - 16);
+    /* Set zoom to available size */
+    image_zoom_fit (ui->image_data,
+                    GTK_WIDGET (ui->image_window)->allocation.width - 16,
+                    GTK_WIDGET (ui->image_window)->allocation.height - 16);
 
-  /* Update image displayed */
-  ui_window_update_image (ui);
+    /* Update image displayed */
+    ui_window_update_image (ui);
 }
 
 /**
@@ -721,20 +727,20 @@ ui_window_callback_menu_zoom_fit (GtkMenuItem *item, gpointer data)
  * @param data
  */
 void
-ui_window_callback_menu_zoom_in (GtkMenuItem *item, gpointer data)
+callback_menu_zoom_in (GtkMenuItem *item, gpointer data)
 {
-  struct ui_window *ui = (struct ui_window*) data;
+    struct ui_window *ui = (struct ui_window*) data;
 
-  /* Nothing to do as there is no image */
-  if (! ui->image_data) {
-    return;
-  }
+    /* Nothing to do as there is no image */
+    if (! ui->image_data) {
+        return;
+    }
 
-  /* Zoom */
-  image_zoom (ui->image_data, 10);
+    /* Zoom */
+    image_zoom (ui->image_data, 10);
 
-  /* Update image displayed */
-  ui_window_update_image (ui);
+    /* Update image displayed */
+    ui_window_update_image (ui);
 }
 
 /**
@@ -744,20 +750,20 @@ ui_window_callback_menu_zoom_in (GtkMenuItem *item, gpointer data)
  * @param data
  */
 void
-ui_window_callback_menu_zoom_out (GtkMenuItem *item, gpointer data)
+callback_menu_zoom_out (GtkMenuItem *item, gpointer data)
 {
-  struct ui_window *ui = (struct ui_window*) data;
+    struct ui_window *ui = (struct ui_window*) data;
 
-  /* Nothing to do as there is no image */
-  if (! ui->image_data) {
-    return;
-  }
+    /* Nothing to do as there is no image */
+    if (! ui->image_data) {
+        return;
+    }
 
-  /* Zoom */
-  image_zoom (ui->image_data, -10);
+    /* Zoom */
+    image_zoom (ui->image_data, -10);
 
-  /* Update image displayed */
-  ui_window_update_image (ui);
+    /* Update image displayed */
+    ui_window_update_image (ui);
 }
 
 /**
@@ -767,20 +773,20 @@ ui_window_callback_menu_zoom_out (GtkMenuItem *item, gpointer data)
  * @param data
  */
 void
-ui_window_callback_menu_rotate_left (GtkMenuItem *item, gpointer data)
+callback_menu_rotate_left (GtkMenuItem *item, gpointer data)
 {
-  struct ui_window *ui = (struct ui_window*) data;
+    struct ui_window *ui = (struct ui_window*) data;
 
-  /* Nothing to do as there is no image */
-  if (! ui->image_data) {
-    return;
-  }
+    /* Nothing to do as there is no image */
+    if (! ui->image_data) {
+        return;
+    }
 
-  /* Rotate */
-  image_rotate (ui->image_data, 90);
+    /* Rotate */
+    image_rotate (ui->image_data, 90);
 
-  /* Update image displayed */
-  ui_window_update_image (ui);
+    /* Update image displayed */
+    ui_window_update_image (ui);
 }
 
 /**
@@ -790,20 +796,20 @@ ui_window_callback_menu_rotate_left (GtkMenuItem *item, gpointer data)
  * @param data
  */
 void
-ui_window_callback_menu_rotate_right (GtkMenuItem *item, gpointer data)
+callback_menu_rotate_right (GtkMenuItem *item, gpointer data)
 {
-  struct ui_window *ui = (struct ui_window*) data;
+    struct ui_window *ui = (struct ui_window*) data;
 
-  /* Nothing to do as there is no image */
-  if (! ui->image_data) {
-    return;
-  }
+    /* Nothing to do as there is no image */
+    if (! ui->image_data) {
+        return;
+    }
 
-  /* Rotate */
-  image_rotate (ui->image_data, -90);
+    /* Rotate */
+    image_rotate (ui->image_data, -90);
 
-  /* Update image displayed */
-  ui_window_update_image (ui);
+    /* Update image displayed */
+    ui_window_update_image (ui);
 }
 
 /**
@@ -813,42 +819,42 @@ ui_window_callback_menu_rotate_right (GtkMenuItem *item, gpointer data)
  * @param data Pointer to struct ui_window.
  */
 void
-ui_window_callback_menu_file_save (GtkMenuItem *item, gpointer data)
+callback_menu_file_save (GtkMenuItem *item, gpointer data)
 {
-  GtkWidget *dialog;
-  struct ui_window *ui = (struct ui_window*) data;
-  gchar *save_path;
+    GtkWidget *dialog;
+    struct ui_window *ui = (struct ui_window*) data;
+    gchar *save_path;
 
-  /* Nothing to do as there is no file */
-  if (! ui->file) {
-    return;
-  }
-
-  /* Create save dialog and set current name to selected file name */
-  dialog = gtk_file_chooser_dialog_new ("Save File", ui->window,
-                                        GTK_FILE_CHOOSER_ACTION_SAVE,
-                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                        GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-                                        NULL);
-  gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog),
-                                                  TRUE);
-
-  gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog),
-                                     file_multi_get_name (ui->file));
-
-  /* Run dialog and save if wanted */
-  if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
-    save_path = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-
-    if (! file_multi_save (ui->file, save_path)) {
-      g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-             "Failed to save file to %s", save_path);
+    /* Nothing to do as there is no file */
+    if (! ui->file) {
+        return;
     }
 
-    g_free (save_path);
-  }
+    /* Create save dialog and set current name to selected file name */
+    dialog = gtk_file_chooser_dialog_new ("Save File", ui->window,
+                                          GTK_FILE_CHOOSER_ACTION_SAVE,
+                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                                          GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+                                          NULL);
+    gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog),
+                                                    TRUE);
 
-  gtk_widget_destroy (dialog);
+    gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog),
+                                       file_multi_get_name (ui->file));
+
+    /* Run dialog and save if wanted */
+    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+        save_path = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+
+        if (! file_multi_save (ui->file, save_path)) {
+            g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+                   "Failed to save file to %s", save_path);
+        }
+
+        g_free (save_path);
+    }
+
+    gtk_widget_destroy (dialog);
 }
 
 /**
@@ -858,36 +864,36 @@ ui_window_callback_menu_file_save (GtkMenuItem *item, gpointer data)
  * @param data Pointer to struct ui_window.
  */
 void
-ui_window_callback_menu_file_rename (GtkMenuItem *item, gpointer data)
+callback_menu_file_rename (GtkMenuItem *item, gpointer data)
 {
-  GtkWidget *dialog, *input;
-  struct ui_window *ui = (struct ui_window*) data;
+    GtkWidget *dialog, *input;
+    struct ui_window *ui = (struct ui_window*) data;
 
-  /* Nothing to do as there is no file */
-  if (! ui->file) {
-    return;
-  }
+    /* Nothing to do as there is no file */
+    if (! ui->file) {
+        return;
+    }
 
-  /* Create rename dialog */
-  dialog = gtk_dialog_new_with_buttons ("Rename File", ui->window,
-                                        0 /* flags */,
-                                        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                        GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
-                                        NULL);
+    /* Create rename dialog */
+    dialog = gtk_dialog_new_with_buttons ("Rename File", ui->window,
+                                          0 /* flags */,
+                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                                          GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
+                                          NULL);
 
-  /* Add file name input */
-  input = gtk_entry_new ();
-  gtk_entry_set_text (GTK_ENTRY (input), file_multi_get_name (ui->file));
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), input);
+    /* Add file name input */
+    input = gtk_entry_new ();
+    gtk_entry_set_text (GTK_ENTRY (input), file_multi_get_name (ui->file));
+    gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), input);
 
-  gtk_widget_show_all (dialog);
+    gtk_widget_show_all (dialog);
 
-  /* Run dialog and save if wanted */
-  if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
-    file_multi_rename (ui->file, gtk_entry_get_text (GTK_ENTRY (input)));
-  }
+    /* Run dialog and save if wanted */
+    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+        file_multi_rename (ui->file, gtk_entry_get_text (GTK_ENTRY (input)));
+    }
 
-  gtk_widget_destroy (dialog);
+    gtk_widget_destroy (dialog);
 }
 
 /**
@@ -899,18 +905,18 @@ ui_window_callback_menu_file_rename (GtkMenuItem *item, gpointer data)
 void
 ui_window_progress_show (struct ui_window *ui, gboolean lock)
 {
-  g_assert (ui);
+    g_assert (ui);
 
-  if (lock) {
-    gdk_threads_enter ();
-  }
+    if (lock) {
+        gdk_threads_enter ();
+    }
 
-  gtk_box_pack_end (GTK_BOX (ui->vbox), GTK_WIDGET (ui->progress),
-                    FALSE, FALSE, 0);
+    gtk_box_pack_end (GTK_BOX (ui->vbox), GTK_WIDGET (ui->progress),
+                      FALSE, FALSE, 0);
 
-  if (lock) {
-    gdk_threads_leave ();
-  }
+    if (lock) {
+        gdk_threads_leave ();
+    }
 }
 
 /**
@@ -922,17 +928,17 @@ ui_window_progress_show (struct ui_window *ui, gboolean lock)
 void
 ui_window_progress_hide (struct ui_window *ui, gboolean lock)
 {
-  g_assert (ui);
+    g_assert (ui);
 
-  if (lock) {
-    gdk_threads_enter ();
-  }
+    if (lock) {
+        gdk_threads_enter ();
+    }
 
-  gtk_container_remove (GTK_CONTAINER (ui->vbox), GTK_WIDGET (ui->progress));
+    gtk_container_remove (GTK_CONTAINER (ui->vbox), GTK_WIDGET (ui->progress));
 
-  if (lock) {
-    gdk_threads_leave ();
-  }
+    if (lock) {
+        gdk_threads_leave ();
+    }
 }
 
 /**
@@ -945,29 +951,29 @@ ui_window_progress_hide (struct ui_window *ui, gboolean lock)
 void
 ui_window_progress_progress (struct ui_window *ui, gint count, gboolean lock)
 {
-  gdouble fraction = 1.0;
+    gdouble fraction = 1.0;
 
-  g_assert (ui);
+    g_assert (ui);
 
-  if (lock) {
-    gdk_threads_enter ();
-  }
+    if (lock) {
+        gdk_threads_enter ();
+    }
 
-  /* Get progress */
-  ui->progress_curr += count;
-  if (ui->progress_curr < 0) {
-    ui->progress_curr = 0;
-  } else if (ui->progress_curr > ui->progress_total) {
-    ui->progress_curr = ui->progress_total;
-  }
+    /* Get progress */
+    ui->progress_curr += count;
+    if (ui->progress_curr < 0) {
+        ui->progress_curr = 0;
+    } else if (ui->progress_curr > ui->progress_total) {
+        ui->progress_curr = ui->progress_total;
+    }
 
-  fraction = ui->progress_curr * ui->progress_step;
+    fraction = ui->progress_curr * ui->progress_step;
 
-  gtk_progress_bar_set_fraction (ui->progress, fraction);
+    gtk_progress_bar_set_fraction (ui->progress, fraction);
 
-  if (lock) {
-    gdk_threads_leave ();
-  }
+    if (lock) {
+        gdk_threads_leave ();
+    }
 }
 
 /**
@@ -979,9 +985,9 @@ ui_window_progress_progress (struct ui_window *ui, gint count, gboolean lock)
 guint
 ui_window_progress_get_total (struct ui_window *ui)
 {
-  g_assert (ui);
+    g_assert (ui);
 
-  return ui->progress_total;
+    return ui->progress_total;
 }
 
 /**
@@ -993,15 +999,15 @@ ui_window_progress_get_total (struct ui_window *ui)
 void
 ui_window_progress_set_total (struct ui_window *ui, guint total)
 {
-  g_assert (ui);
+    g_assert (ui);
 
-  /* Avoid division by zero */
-  if (total == 0) {
-    total = 1;
-  }
+    /* Avoid division by zero */
+    if (total == 0) {
+        total = 1;
+    }
 
-  ui->progress_total = total;
-  ui->progress_step = 1.0 / (gdouble) total;
+    ui->progress_total = total;
+    ui->progress_step = 1.0 / (gdouble) total;
 }
 
 /**
@@ -1013,21 +1019,21 @@ ui_window_progress_set_total (struct ui_window *ui, guint total)
 void
 ui_window_progress_add (gpointer data, gint count)
 {
-  struct ui_window *ui = (struct ui_window*) data;
+    struct ui_window *ui = (struct ui_window*) data;
 
-  /* Make sure count is not overflowed */
-  if (count < 0 && abs (count) > ui->progress_total) {
-    count = ui->progress_total;
-  }
+    /* Make sure count is not overflowed */
+    if (count < 0 && abs (count) > ui->progress_total) {
+        count = ui->progress_total;
+    }
 
-  ui_window_progress_set_total (ui, ui->progress_total + count);
+    ui_window_progress_set_total (ui, ui->progress_total + count);
 }
 
 /**
  * Show the next image in the set.
  */
 void
-ui_window_slide_next (struct ui_window *ui)
+slide_next (struct ui_window *ui)
 {
     struct file_multi *file;
 
@@ -1043,7 +1049,7 @@ ui_window_slide_next (struct ui_window *ui)
  * Show the previous image in the set.
  */
 void
-ui_window_slide_prev (struct ui_window *ui)
+slide_prev (struct ui_window *ui)
 {
     struct file_multi *file;
     GtkTreePath *path;

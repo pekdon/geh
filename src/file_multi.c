@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -80,29 +80,29 @@ static gboolean file_multi_fetch_wget (struct file_multi *fm,
 struct file_multi*
 file_multi_open (const gchar *path)
 {
-  struct file_multi *fm;
+    struct file_multi *fm;
 
-  g_assert (path);
+    g_assert (path);
 
-  /* Create new struct file_multi */
-  fm = g_malloc (sizeof (struct file_multi));
-  fm->name = NULL;
-  fm->ext = NULL;
-  fm->uri = NULL;
-  fm->dir = NULL;
-  fm->path = g_strdup (path);
-  fm->path_tmp = NULL;
-  fm->mtime = -1;
-  fm->method = FILE_MULTI_METHOD_PLAIN;
-  fm->need_fetch = FALSE;
+    /* Create new struct file_multi */
+    fm = g_malloc (sizeof (struct file_multi));
+    fm->name = NULL;
+    fm->ext = NULL;
+    fm->uri = NULL;
+    fm->dir = NULL;
+    fm->path = g_strdup (path);
+    fm->path_tmp = NULL;
+    fm->mtime = -1;
+    fm->method = FILE_MULTI_METHOD_PLAIN;
+    fm->need_fetch = FALSE;
 
-  /* Identify method to fetch file with (if needed) */
-  fm->method = file_multi_get_method (fm->path);
-  if (fm->method != FILE_MULTI_METHOD_PLAIN) {
-    fm->need_fetch = TRUE;
-  }
+    /* Identify method to fetch file with (if needed) */
+    fm->method = file_multi_get_method (fm->path);
+    if (fm->method != FILE_MULTI_METHOD_PLAIN) {
+        fm->need_fetch = TRUE;
+    }
 
-  return fm;
+    return fm;
 }
 
 /**
@@ -113,12 +113,12 @@ file_multi_open (const gchar *path)
 void
 file_multi_close (struct file_multi *fm)
 {
-  g_assert (fm);
+    g_assert (fm);
 
-  file_multi_free_strings (fm);
-  file_multi_close_tmp (fm);
+    file_multi_free_strings (fm);
+    file_multi_close_tmp (fm);
 
-  g_free (fm);
+    g_free (fm);
 }
 
 /**
@@ -129,14 +129,14 @@ file_multi_close (struct file_multi *fm)
 void
 file_multi_close_tmp (struct file_multi *fm)
 {
-  g_assert (fm);
+    g_assert (fm);
 
-  /* Clean up temporary file if any. */
-  if (fm->path_tmp) {
-    g_unlink (fm->path_tmp);
-    g_free (fm->path_tmp);
-    fm->path_tmp = NULL;
-  }
+    /* Clean up temporary file if any. */
+    if (fm->path_tmp) {
+        g_unlink (fm->path_tmp);
+        g_free (fm->path_tmp);
+        fm->path_tmp = NULL;
+    }
 }
 
 /**
@@ -147,26 +147,26 @@ file_multi_close_tmp (struct file_multi *fm)
 void
 file_multi_free_strings (struct file_multi *fm)
 {
-  if (fm->name) {
-    g_free (fm->name);
-    fm->name = NULL;
-  }
-  if (fm->ext) {
-    g_free (fm->ext);
-    fm->ext = NULL;
-  }
-  if (fm->uri) {
-    g_free (fm->uri);
-    fm->uri = NULL;
-  }
-  if (fm->dir) {
-    g_free (fm->dir);
-    fm->dir = NULL;
-  }
-  if (fm->path) {
-    g_free (fm->path);
-    fm->path = NULL;
-  }
+    if (fm->name) {
+        g_free (fm->name);
+        fm->name = NULL;
+    }
+    if (fm->ext) {
+        g_free (fm->ext);
+        fm->ext = NULL;
+    }
+    if (fm->uri) {
+        g_free (fm->uri);
+        fm->uri = NULL;
+    }
+    if (fm->dir) {
+        g_free (fm->dir);
+        fm->dir = NULL;
+    }
+    if (fm->path) {
+        g_free (fm->path);
+        fm->path = NULL;
+    }
 }
 
 /**
@@ -179,38 +179,38 @@ file_multi_free_strings (struct file_multi *fm)
 gboolean
 file_multi_save (struct file_multi *fm, const gchar *path)
 {
-  gchar buf[BUF_SAVE];
-  size_t buf_read;
-  FILE *in, *out;
+    gchar buf[BUF_SAVE];
+    size_t buf_read;
+    FILE *in, *out;
 
-  /* Open input file */
-  in = g_fopen (file_multi_get_path (fm), "rb");
-  if (! in) {
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-           "Failed to open %s for reading.", file_multi_get_path (fm));
-    return FALSE;
-  }
+    /* Open input file */
+    in = g_fopen (file_multi_get_path (fm), "rb");
+    if (! in) {
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+               "Failed to open %s for reading.", file_multi_get_path (fm));
+        return FALSE;
+    }
 
-  /* Create output file */
-  out = g_fopen (path, "wb");
-  if (! out) {
+    /* Create output file */
+    out = g_fopen (path, "wb");
+    if (! out) {
+        fclose (in);
+
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+               "Failed to open %s for writing.", path);
+        return FALSE;
+    }
+
+    /* Copy in to out */
+    while ((buf_read = fread (buf, sizeof (gchar), BUF_SAVE, in)) > 0) {
+        fwrite (buf, sizeof (gchar), buf_read, out);
+    }
+
+    /* Close output */
     fclose (in);
+    fclose (out);
 
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-           "Failed to open %s for writing.", path);
-    return FALSE;
-  }
-
-  /* Copy in to out */
-  while ((buf_read = fread (buf, sizeof (gchar), BUF_SAVE, in)) > 0) {
-    fwrite (buf, sizeof (gchar), buf_read, out);
-  }
-
-  /* Close output */
-  fclose (in);
-  fclose (out);
-
-  return TRUE;
+    return TRUE;
 }
 
 /**
@@ -223,34 +223,34 @@ file_multi_save (struct file_multi *fm, const gchar *path)
 gboolean
 file_multi_rename (struct file_multi *fm, const gchar *name)
 {
-  gchar *path_new;
-  gboolean status = FALSE;
+    gchar *path_new;
+    gboolean status = FALSE;
 
-  g_assert (fm);
+    g_assert (fm);
 
-  path_new = g_strjoin ("/", file_multi_get_dir (fm), name, NULL);
+    path_new = g_strjoin ("/", file_multi_get_dir (fm), name, NULL);
 
-  g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
-         "Rename %s to %s", file_multi_get_path (fm), path_new);
-  if (! rename (file_multi_get_path (fm), path_new)) {
-    status = TRUE;
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
+           "Rename %s to %s", file_multi_get_path (fm), path_new);
+    if (! rename (file_multi_get_path (fm), path_new)) {
+        status = TRUE;
 
-    /* Free uri etc, as it gets changed by rename */
-    file_multi_free_strings (fm);
+        /* Free uri etc, as it gets changed by rename */
+        file_multi_free_strings (fm);
 
-    fm->path = path_new;
-    if (fm->path_tmp) {
-      /* Keep temporary file, update with new path */
-      g_free (fm->path_tmp);
-      fm->path_tmp = g_strdup (fm->path);
+        fm->path = path_new;
+        if (fm->path_tmp) {
+            /* Keep temporary file, update with new path */
+            g_free (fm->path_tmp);
+            fm->path_tmp = g_strdup (fm->path);
+        }
+
+    } else {
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+               "Failed to rename %s to %s", file_multi_get_name (fm), name);
     }
 
-  } else {
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-           "Failed to rename %s to %s", file_multi_get_name (fm), name);
-  }
-
-  return status;
+    return status;
 }
 
 /**
@@ -262,13 +262,13 @@ file_multi_rename (struct file_multi *fm, const gchar *name)
 const gchar*
 file_multi_get_name (struct file_multi *fm)
 {
-  g_assert (fm);
+    g_assert (fm);
 
-  if (! fm->name) {
-    fm->name = file_multi_create_name (fm->path, fm->method);
-  }
+    if (! fm->name) {
+        fm->name = file_multi_create_name (fm->path, fm->method);
+    }
 
-  return fm->name;
+    return fm->name;
 }
 
 /**
@@ -280,13 +280,13 @@ file_multi_get_name (struct file_multi *fm)
 const gchar*
 file_multi_get_ext (struct file_multi *fm)
 {
-  g_assert (fm);
+    g_assert (fm);
 
-  if (! fm->ext) {
-    fm->ext = file_multi_create_ext (fm->path);
-  }
+    if (! fm->ext) {
+        fm->ext = file_multi_create_ext (fm->path);
+    }
 
-  return fm->ext ? fm->ext : "";
+    return fm->ext ? fm->ext : "";
 }
 
 /**
@@ -298,13 +298,13 @@ file_multi_get_ext (struct file_multi *fm)
 const gchar*
 file_multi_get_uri (struct file_multi *fm)
 {
-  g_assert (fm);
+    g_assert (fm);
 
-  if (! fm->uri) {
-    fm->uri = file_multi_create_uri (fm->path, fm->method);
-  }
+    if (! fm->uri) {
+        fm->uri = file_multi_create_uri (fm->path, fm->method);
+    }
 
-  return fm->uri;
+    return fm->uri;
 }
 
 /**
@@ -316,13 +316,13 @@ file_multi_get_uri (struct file_multi *fm)
 const gchar*
 file_multi_get_dir (struct file_multi *fm)
 {
-  g_assert (fm);
+    g_assert (fm);
 
-  if (! fm->dir) {
-    fm->dir = file_multi_create_dir (fm->path);
-  }
+    if (! fm->dir) {
+        fm->dir = file_multi_create_dir (fm->path);
+    }
 
-  return fm->dir;
+    return fm->dir;
 }
 
 /**
@@ -334,13 +334,13 @@ file_multi_get_dir (struct file_multi *fm)
 const gchar*
 file_multi_get_path (struct file_multi *fm)
 {
-  g_assert (fm);
+    g_assert (fm);
 
-  if (fm->path_tmp) {
-    return fm->path_tmp;
-  } else {
-    return fm->path;
-  }
+    if (fm->path_tmp) {
+        return fm->path_tmp;
+    } else {
+        return fm->path;
+    }
 }
 
 /**
@@ -352,18 +352,18 @@ file_multi_get_path (struct file_multi *fm)
 off_t
 file_multi_get_size (struct file_multi *fm)
 {
-  struct stat buf;
+    struct stat buf;
 
-  g_assert (fm);
+    g_assert (fm);
 
-  /* size not already set, try get to fetch it */
-  if (fm->size == -1) {
-    if (g_stat (file_multi_get_path (fm), &buf)) {
-      fm->size = buf.st_size;
+    /* size not already set, try get to fetch it */
+    if (fm->size == -1) {
+        if (g_stat (file_multi_get_path (fm), &buf)) {
+            fm->size = buf.st_size;
+        }
     }
-  }
 
-  return fm->size;
+    return fm->size;
 }
 
 /**
@@ -375,18 +375,18 @@ file_multi_get_size (struct file_multi *fm)
 time_t
 file_multi_get_mtime (struct file_multi *fm)
 {
-  struct stat buf;
+    struct stat buf;
 
-  g_assert (fm);
+    g_assert (fm);
 
-  /* mtime not already set, try get to fetch it */
-  if (fm->mtime == -1) {
-    if (! g_stat (file_multi_get_path (fm), &buf)) {
-      fm->mtime = buf.st_mtime;
+    /* mtime not already set, try get to fetch it */
+    if (fm->mtime == -1) {
+        if (! g_stat (file_multi_get_path (fm), &buf)) {
+            fm->mtime = buf.st_mtime;
+        }
     }
-  }
 
-  return fm->mtime;
+    return fm->mtime;
 }
 
 /**
@@ -399,39 +399,39 @@ file_multi_get_mtime (struct file_multi *fm)
 gboolean
 file_multi_fetch (struct file_multi *fm, gboolean *stop)
 {
-  gboolean status;
+    gboolean status;
 
-  g_assert (fm);
+    g_assert (fm);
 
-  if (! fm->need_fetch || fm->path_tmp) {
-    return TRUE;
-  }
+    if (! fm->need_fetch || fm->path_tmp) {
+        return TRUE;
+    }
 
-  /* Get path to temporary file */
-  fm->path_tmp = file_multi_create_tmpname ();
-  if (! fm->path_tmp) {
-    g_warning ("failed to get temporary file for fetching");
+    /* Get path to temporary file */
+    fm->path_tmp = file_multi_create_tmpname ();
+    if (! fm->path_tmp) {
+        g_warning ("failed to get temporary file for fetching");
 
-    return FALSE;
-  }
+        return FALSE;
+    }
 
-  /* Fetch based on method */
-  switch (fm->method) {
-  case FILE_MULTI_METHOD_STDIN:
-    status = file_multi_fetch_stdin (fm, stop);
-    break;
-  case FILE_MULTI_METHOD_HTTP:
-    status = file_multi_fetch_http (fm, stop);
-    break;
-  case FILE_MULTI_METHOD_FTP:
-    status = file_multi_fetch_ftp (fm, stop);
-    break;
-  default:
-    /* Unknown method */
-    status = FALSE;
-  }
+    /* Fetch based on method */
+    switch (fm->method) {
+    case FILE_MULTI_METHOD_STDIN:
+        status = file_multi_fetch_stdin (fm, stop);
+        break;
+    case FILE_MULTI_METHOD_HTTP:
+        status = file_multi_fetch_http (fm, stop);
+        break;
+    case FILE_MULTI_METHOD_FTP:
+        status = file_multi_fetch_ftp (fm, stop);
+        break;
+    default:
+        /* Unknown method */
+        status = FALSE;
+    }
 
-  return status;
+    return status;
 }
 
 /**
@@ -443,9 +443,9 @@ file_multi_fetch (struct file_multi *fm, gboolean *stop)
 gboolean
 file_multi_need_fetch (struct file_multi *fm)
 {
-  g_assert (fm);
+    g_assert (fm);
 
-  return fm->need_fetch;
+    return fm->need_fetch;
 }
 
 /**
@@ -456,22 +456,22 @@ file_multi_need_fetch (struct file_multi *fm)
 guint
 file_multi_get_method (const gchar *path)
 {
-  guint method;
+    guint method;
 
-  g_assert (path);
+    g_assert (path);
 
-  if ((path[0] == '-') && (path[1] == '\0')) {
-    method = FILE_MULTI_METHOD_STDIN;
-  } else if ((util_stripos (path, "http://") == path)
-             || (util_stripos (path, "https://") == path)) {
-    method = FILE_MULTI_METHOD_HTTP;
-  } else if (util_stripos (path, "ftp://")) {
-    method = FILE_MULTI_METHOD_FTP;
-  } else {
-    method = FILE_MULTI_METHOD_PLAIN;
-  }
+    if ((path[0] == '-') && (path[1] == '\0')) {
+        method = FILE_MULTI_METHOD_STDIN;
+    } else if ((util_stripos (path, "http://") == path)
+               || (util_stripos (path, "https://") == path)) {
+        method = FILE_MULTI_METHOD_HTTP;
+    } else if (util_stripos (path, "ftp://")) {
+        method = FILE_MULTI_METHOD_FTP;
+    } else {
+        method = FILE_MULTI_METHOD_PLAIN;
+    }
 
-  return method;
+    return method;
 }
 
 /**
@@ -484,15 +484,15 @@ file_multi_get_method (const gchar *path)
 gchar*
 file_multi_create_name (const gchar *path, guint method)
 {
-  gchar *name;
+    gchar *name;
 
-  if (method == FILE_MULTI_METHOD_STDIN) {
-    name = g_strdup ("stdin");
-  } else {
-    name = g_path_get_basename (path);
-  }
+    if (method == FILE_MULTI_METHOD_STDIN) {
+        name = g_strdup ("stdin");
+    } else {
+        name = g_path_get_basename (path);
+    }
 
-  return name;
+    return name;
 }
 
 /**
@@ -504,14 +504,14 @@ file_multi_create_name (const gchar *path, guint method)
 gchar*
 file_multi_create_ext (const gchar *path)
 {
-  gchar *ext;
+    gchar *ext;
 
-  ext = strrchr (path, '.');
-  if (ext) {
-    ext = g_strdup (ext + 1);
-  }
+    ext = strrchr (path, '.');
+    if (ext) {
+        ext = g_strdup (ext + 1);
+    }
 
-  return ext;
+    return ext;
 }
 
 /**
@@ -523,12 +523,12 @@ file_multi_create_ext (const gchar *path)
 gchar*
 file_multi_create_dir (const gchar *path)
 {
-  gchar *dir;
+    gchar *dir;
 
-  dir = g_strdup (path);
-  dir = dirname (dir);
+    dir = g_strdup (path);
+    dir = dirname (dir);
 
-  return dir;
+    return dir;
 }
 
 /**
@@ -541,31 +541,31 @@ file_multi_create_dir (const gchar *path)
 gchar*
 file_multi_create_uri (const gchar *path, guint method)
 {
-  gchar *uri;
+    gchar *uri;
 
-  if (method == FILE_MULTI_METHOD_STDIN) {
-    /* Stdin can not be URIified */
-    uri = g_strdup ("stdin");
+    if (method == FILE_MULTI_METHOD_STDIN) {
+        /* Stdin can not be URIified */
+        uri = g_strdup ("stdin");
 
-  } else if (method == FILE_MULTI_METHOD_PLAIN) {
-    /* Standard file, make sure ~ is expanded and path is absolute */
-    if (path[0] == '~') {
-      uri = g_strjoin ("/", "file:/", g_get_home_dir (), path + 1, NULL);
+    } else if (method == FILE_MULTI_METHOD_PLAIN) {
+        /* Standard file, make sure ~ is expanded and path is absolute */
+        if (path[0] == '~') {
+            uri = g_strjoin ("/", "file:/", g_get_home_dir (), path + 1, NULL);
 
-    } else if (path[0] == '/') {
-      /* Absolute path, append file:// */
-      uri = g_strjoin (NULL, "file://", path, NULL);
+        } else if (path[0] == '/') {
+            /* Absolute path, append file:// */
+            uri = g_strjoin (NULL, "file://", path, NULL);
+        } else {
+            /* Relative path, append file:// + current directory */
+            uri = g_strjoin ("/", "file:/", g_get_current_dir (), path, NULL);
+        }
+
     } else {
-      /* Relative path, append file:// + current directory */
-      uri = g_strjoin ("/", "file:/", g_get_current_dir (), path, NULL);
+        /* Already an URI for the other methods */
+        uri = g_strdup (path);
     }
 
-  } else {
-    /* Already an URI for the other methods */
-    uri = g_strdup (path);
-  }
-
-  return uri;
+    return uri;
 }
 
 /**
@@ -576,17 +576,17 @@ file_multi_create_uri (const gchar *path, guint method)
 gchar*
 file_multi_create_tmpname (void)
 {
-  gint fd;
-  gchar *path = g_strdup("/tmp/geh_XXXXXX");
+    gint fd;
+    gchar *path = g_strdup("/tmp/geh_XXXXXX");
 
-  /* Create temporary file */
-  fd = g_mkstemp (path);
-  if (fd == -1) {
-    g_free (path);
-    return NULL;
-  }
+    /* Create temporary file */
+    fd = g_mkstemp (path);
+    if (fd == -1) {
+        g_free (path);
+        return NULL;
+    }
 
-  return path;
+    return path;
 }
 
 /**
@@ -599,27 +599,27 @@ file_multi_create_tmpname (void)
 gboolean
 file_multi_fetch_stdin (struct file_multi *fm, gboolean *stop)
 {
-  gchar buf[BUF_STDIN];
-  size_t buf_read;
-  FILE *out;
+    gchar buf[BUF_STDIN];
+    size_t buf_read;
+    FILE *out;
 
-  /* Create output file */
-  out = g_fopen (fm->path_tmp, "wb");
-  if (! out) {
-    g_warning ("Unable to write to temporary file %s", fm->path_tmp);
+    /* Create output file */
+    out = g_fopen (fm->path_tmp, "wb");
+    if (! out) {
+        g_warning ("Unable to write to temporary file %s", fm->path_tmp);
 
-    return FALSE;
-  }
+        return FALSE;
+    }
 
-  /* Read all of stdin and write to out */
-  while ((buf_read = read (0 /* stdin */, buf, BUF_STDIN)) > 0) {
-    fwrite (buf, 1, buf_read, out);
-  }
+    /* Read all of stdin and write to out */
+    while ((buf_read = read (0 /* stdin */, buf, BUF_STDIN)) > 0) {
+        fwrite (buf, 1, buf_read, out);
+    }
 
-  /* Close file */
-  fclose (out);
+    /* Close file */
+    fclose (out);
 
-  return TRUE;
+    return TRUE;
 }
 
 /**
@@ -632,7 +632,7 @@ file_multi_fetch_stdin (struct file_multi *fm, gboolean *stop)
 gboolean
 file_multi_fetch_http (struct file_multi *fm, gboolean *stop)
 {
-  return file_multi_fetch_wget (fm, stop);
+    return file_multi_fetch_wget (fm, stop);
 }
 
 /**
@@ -645,7 +645,7 @@ file_multi_fetch_http (struct file_multi *fm, gboolean *stop)
 gboolean
 file_multi_fetch_ftp (struct file_multi *fm, gboolean *stop)
 {
-  return file_multi_fetch_wget (fm, stop);
+    return file_multi_fetch_wget (fm, stop);
 }
 
 /**
@@ -659,67 +659,68 @@ file_multi_fetch_ftp (struct file_multi *fm, gboolean *stop)
 gboolean
 file_multi_fetch_wget (struct file_multi *fm, gboolean *stop)
 {
-  gchar *argv[5];
-  gint status = 0, child_done = 0, child_status = 1;
-  GPid child_pid;
+    gchar *argv[5];
+    gint status = 0, child_done = 0, child_status = 1;
+    GPid child_pid;
 
-  GError *err = NULL;
+    GError *err = NULL;
 
-  /* Do nothing if stop flag */
-  if (*stop) {
-    return FALSE;
-  }
-
-  /* Build command */
-  argv[0] = "wget";
-  argv[1] = "-O";
-  argv[2] = fm->path_tmp;
-  argv[3] = fm->path;
-  argv[4] = NULL;
-
-  if (g_spawn_async (NULL /* working_directory */, argv, NULL, WGET_SPAWN_FLAGS,
-                     NULL /* child_setup */, NULL /* user_data */,
-                     &child_pid, &err)) {
-    /* Wait for child to finish */
-    while (! *stop && ! child_done && status != -1) {
-      status = waitpid (child_pid, &child_status, WNOHANG);
-      if (status > 0) {
-        child_done = 1;
-      } else {
-        g_usleep (WGET_CHECK_INTERVAL);
-      }
+    /* Do nothing if stop flag */
+    if (*stop) {
+        return FALSE;
     }
 
-    /* Kill child and wait for it to exit */
-    if (! child_done) {
-      kill (child_pid, WGET_KILL_SIGNAL);
-      g_usleep (WGET_CHECK_INTERVAL);
-      if (waitpid (child_pid, &child_status, WNOHANG) < 1) {
-        /* Failed to stop, really kill */
-        g_usleep (WGET_KILL_WAIT);
-        kill (child_pid, WGET_DIE_SIGNAL);
-        waitpid (child_pid, &child_status, 0);
-      }
+    /* Build command */
+    argv[0] = "wget";
+    argv[1] = "-O";
+    argv[2] = fm->path_tmp;
+    argv[3] = fm->path;
+    argv[4] = NULL;
+
+    if (g_spawn_async (NULL /* working_directory */, argv,
+                       NULL, WGET_SPAWN_FLAGS,
+                       NULL /* child_setup */, NULL /* user_data */,
+                       &child_pid, &err)) {
+        /* Wait for child to finish */
+        while (! *stop && ! child_done && status != -1) {
+            status = waitpid (child_pid, &child_status, WNOHANG);
+            if (status > 0) {
+                child_done = 1;
+            } else {
+                g_usleep (WGET_CHECK_INTERVAL);
+            }
+        }
+
+        /* Kill child and wait for it to exit */
+        if (! child_done) {
+            kill (child_pid, WGET_KILL_SIGNAL);
+            g_usleep (WGET_CHECK_INTERVAL);
+            if (waitpid (child_pid, &child_status, WNOHANG) < 1) {
+                /* Failed to stop, really kill */
+                g_usleep (WGET_KILL_WAIT);
+                kill (child_pid, WGET_DIE_SIGNAL);
+                waitpid (child_pid, &child_status, 0);
+            }
+        }
+
+        if (child_status == 0) {
+            /* Succeeded to fetch file, set need_fetch flag */
+            fm->need_fetch = FALSE;      
+        } else {
+            /* Failed to fetch file, clear the tmp flag */
+            if (child_done) {
+                g_fprintf (stderr, "Unable to fetch %s\n", fm->path);
+            }
+            file_multi_close_tmp (fm);
+        }
+
+        /* Cleanup */
+        g_spawn_close_pid (child_pid);
+
+    } else if (err) {
+        g_fprintf (stderr, "%s\n", err->message);
+        g_error_free (err);
     }
 
-    if (child_status == 0) {
-      /* Succeeded to fetch file, set need_fetch flag */
-      fm->need_fetch = FALSE;      
-    } else {
-      /* Failed to fetch file, clear the tmp flag */
-      if (child_done) {
-        g_fprintf (stderr, "Unable to fetch %s\n", fm->path);
-      }
-      file_multi_close_tmp (fm);
-    }
-
-    /* Cleanup */
-    g_spawn_close_pid (child_pid);
-
-  } else if (err) {
-    g_fprintf (stderr, "%s\n", err->message);
-    g_error_free (err);
-  }
-
-  return ! fm->need_fetch;
+    return ! fm->need_fetch;
 }

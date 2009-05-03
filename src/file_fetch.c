@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: file_fetch.c 63 2006-08-14 13:16:53Z me@pekdon.net $
- *
  * Routines for threaded fetching of files.
  */
 
@@ -49,7 +47,7 @@
 static gpointer file_fetch_worker (gpointer data);
 static void file_fetch_file (gpointer data, gpointer user_data);
 static guint file_fetch_enqueue_images (struct file_fetch *file_fetch,
-                                       GList *images);
+                                        GList *images);
 static void file_fetch_progress (struct file_fetch *file_fetch,
                                  struct file_multi *file, gboolean status);
 
@@ -63,25 +61,25 @@ struct file_fetch*
 file_fetch_start (struct file_queue *queue, GList *file_list,
                   struct ui_window *ui)
 {
-  struct file_fetch *file_fetch;
+    struct file_fetch *file_fetch;
 
-  file_fetch = g_malloc (sizeof (struct file_fetch));
+    file_fetch = g_malloc (sizeof (struct file_fetch));
 
-  file_fetch->ui = ui;
-  file_fetch->queue = queue;
+    file_fetch->ui = ui;
+    file_fetch->queue = queue;
 
-  /* Create hash table for keeping track of fetched files */
-  file_fetch->hash = g_hash_table_new (g_str_hash, g_str_equal);
-  file_fetch->hash_mutex = g_mutex_new ();
+    /* Create hash table for keeping track of fetched files */
+    file_fetch->hash = g_hash_table_new (g_str_hash, g_str_equal);
+    file_fetch->hash_mutex = g_mutex_new ();
 
-  file_fetch->stop = FALSE;
+    file_fetch->stop = FALSE;
 
-  /* Start worker thread which starts thread pool */
-  file_fetch->thread = g_thread_create ((GThreadFunc) &file_fetch_worker,
-                                        file_fetch /* data */,
-                                        TRUE /* joinable */, NULL);
+    /* Start worker thread which starts thread pool */
+    file_fetch->thread = g_thread_create ((GThreadFunc) &file_fetch_worker,
+                                          file_fetch /* data */,
+                                          TRUE /* joinable */, NULL);
 
-  return file_fetch;
+    return file_fetch;
 }
 
 /**
@@ -92,19 +90,20 @@ file_fetch_start (struct file_queue *queue, GList *file_list,
 void
 file_fetch_stop (struct file_fetch *file_fetch)
 {
-  g_assert (file_fetch);
+    g_assert (file_fetch);
 
-  /* No locking, should be safe. */
-  file_fetch->stop = TRUE;
+    /* No locking, should be safe. */
+    file_fetch->stop = TRUE;
 
-  /* Join worker thread */
-  g_thread_join (file_fetch->thread);
+    /* Join worker thread */
+    g_thread_join (file_fetch->thread);
 
-  /* Stop fetching threads */
-  g_thread_pool_free (file_fetch->pool, TRUE /* immediate */, TRUE /* wait */);
+    /* Stop fetching threads */
+    g_thread_pool_free (file_fetch->pool,
+                        TRUE /* immediate */, TRUE /* wait */);
 
-  /* Free resources */
-  g_hash_table_destroy (file_fetch->hash);
+    /* Free resources */
+    g_hash_table_destroy (file_fetch->hash);
 }
 
 /**
@@ -116,40 +115,41 @@ file_fetch_stop (struct file_fetch *file_fetch)
 gpointer
 file_fetch_worker (gpointer data)
 {
-  struct file_fetch *file_fetch = (struct file_fetch*) data;
-  struct file_multi *file;
+    struct file_fetch *file_fetch = (struct file_fetch*) data;
+    struct file_multi *file;
 
-  g_assert (file_fetch);
+    g_assert (file_fetch);
 
-  /* Create thread pool for fetching */
-  file_fetch->pool = g_thread_pool_new ((GFunc) &file_fetch_file,
-                                        data /* user data */, 3 /* max threads */,
-                                        FALSE /* exclusive */, NULL);
+    /* Create thread pool for fetching */
+    file_fetch->pool = g_thread_pool_new ((GFunc) &file_fetch_file,
+                                          data /* user data */,
+                                          3 /* max threads */,
+                                          FALSE /* exclusive */, NULL);
 
-  /* Go through list of files and fetch */
-  while (! file_fetch->stop
-         && (file = file_queue_pop (file_fetch->queue)) != NULL) {
-    if (file_multi_need_fetch (file)) {
-      g_mutex_lock (file_fetch->hash_mutex);
-      if (! g_hash_table_lookup (file_fetch->hash,
-                                 file_multi_get_path (file))) {
-        /* Fetch file if needed */
-        g_thread_pool_push (file_fetch->pool, (gpointer) file, NULL);
-      }
-      g_mutex_unlock (file_fetch->hash_mutex);
+    /* Go through list of files and fetch */
+    while (! file_fetch->stop
+           && (file = file_queue_pop (file_fetch->queue)) != NULL) {
+        if (file_multi_need_fetch (file)) {
+            g_mutex_lock (file_fetch->hash_mutex);
+            if (! g_hash_table_lookup (file_fetch->hash,
+                                       file_multi_get_path (file))) {
+                /* Fetch file if needed */
+                g_thread_pool_push (file_fetch->pool, (gpointer) file, NULL);
+            }
+            g_mutex_unlock (file_fetch->hash_mutex);
 
-    } else {
-      /* Do not always use the thread pool as it might block if mixing
-         files to fetch and files not needed to be fetched. */
-      file_fetch_progress (file_fetch, file, TRUE);
-      file_queue_done (file_fetch->queue);
+        } else {
+            /* Do not always use the thread pool as it might block if mixing
+               files to fetch and files not needed to be fetched. */
+            file_fetch_progress (file_fetch, file, TRUE);
+            file_queue_done (file_fetch->queue);
+        }
     }
-  }
 
-  /* Hide progress bar when done */    
-  ui_window_progress_hide (file_fetch->ui, TRUE /* lock */);
+    /* Hide progress bar when done */    
+    ui_window_progress_hide (file_fetch->ui, TRUE /* lock */);
 
-  return NULL;  
+    return NULL;  
 }
 
 /**
@@ -161,66 +161,68 @@ file_fetch_worker (gpointer data)
 void
 file_fetch_file (gpointer data, gpointer user_data)
 {
-  gboolean status;
-  guint images_added, images_total, images_total_before;
-  GList *images;
+    gboolean status;
+    guint images_added, images_total, images_total_before;
+    GList *images;
 
-  /* Get file */
-  struct file_fetch *file_fetch = (struct file_fetch*) user_data;
-  struct file_multi *file = (struct file_multi*) data;
+    /* Get file */
+    struct file_fetch *file_fetch = (struct file_fetch*) user_data;
+    struct file_multi *file = (struct file_multi*) data;
 
-  /* Check total image count */
-  images_total = ui_window_progress_get_total (file_fetch->ui);
-  images_total_before = images_total;
+    /* Check total image count */
+    images_total = ui_window_progress_get_total (file_fetch->ui);
+    images_total_before = images_total;
 
-  /* Double check fetched file hash to avoid race */
-  g_mutex_lock (file_fetch->hash_mutex);
-  if (g_hash_table_lookup (file_fetch->hash, file_multi_get_path (file))) {
-    file = NULL;
-  } else {
-    g_hash_table_insert (file_fetch->hash,
-                         (gpointer) file_multi_get_path (file),
-                         (gpointer) file);
-  }
-  g_mutex_unlock (file_fetch->hash_mutex);
-
-  /* File was already fetched, skip */
-  if (file) {
-    /* Fetch the file */
-    status = file_multi_fetch (file, &file_fetch->stop);
-    if (status) {
-      /* Successfully fetched file */
-      if (file_multi_get_ext (file)
-          && util_str_in (file_multi_get_ext (file), TRUE /* casei */,
-                          IMAGE_EXT)) {
-        file_fetch_progress (file_fetch, file, status);
-
-      } else {
-        /* Extract image links from file (expected to be non-binary) */
-        images = file_fetch_img_extract_links (file);
-        if (images) {
-          images_added = file_fetch_enqueue_images (file_fetch, images);
-          images_total += images_added - 1;
-          g_list_free (images);
-
-        } else {
-          images_total -= 1;
-        }
-      }
+    /* Double check fetched file hash to avoid race */
+    g_mutex_lock (file_fetch->hash_mutex);
+    if (g_hash_table_lookup (file_fetch->hash, file_multi_get_path (file))) {
+        file = NULL;
     } else {
-      /* Failed to fetch, reduce number of files. */
-      images_total -= 1;
+        g_hash_table_insert (file_fetch->hash,
+                             (gpointer) file_multi_get_path (file),
+                             (gpointer) file);
     }
-  }
+    g_mutex_unlock (file_fetch->hash_mutex);
 
-  /* Set total number of images */
-  if (images_total != images_total_before) {
-    ui_window_progress_set_total (file_fetch->ui, images_total);
-    ui_window_progress_progress (file_fetch->ui,
-                                 0 /* count */, TRUE /* lock */);
-  }
+    /* File was already fetched, skip */
+    if (file) {
+        /* Fetch the file */
+        status = file_multi_fetch (file, &file_fetch->stop);
+        if (status) {
+            /* Successfully fetched file */
+            if (file_multi_get_ext (file)
+                && util_str_in (file_multi_get_ext (file), TRUE /* casei */,
+                                IMAGE_EXT)) {
+                file_fetch_progress (file_fetch, file, status);
 
-  file_queue_done (file_fetch->queue);
+            } else {
+                /* Extract image links from file (expected to be
+                   non-binary) */
+                images = file_fetch_img_extract_links (file);
+                if (images) {
+                    images_added = file_fetch_enqueue_images (file_fetch,
+                                                              images);
+                    images_total += images_added - 1;
+                    g_list_free (images);
+
+                } else {
+                    images_total -= 1;
+                }
+            }
+        } else {
+            /* Failed to fetch, reduce number of files. */
+            images_total -= 1;
+        }
+    }
+
+    /* Set total number of images */
+    if (images_total != images_total_before) {
+        ui_window_progress_set_total (file_fetch->ui, images_total);
+        ui_window_progress_progress (file_fetch->ui,
+                                     0 /* count */, TRUE /* lock */);
+    }
+
+    file_queue_done (file_fetch->queue);
 }
 
 /**
@@ -233,25 +235,25 @@ file_fetch_file (gpointer data, gpointer user_data)
 guint
 file_fetch_enqueue_images (struct file_fetch *file_fetch, GList *images)
 {
-  GList *it;
-  guint added = 0;
+    GList *it;
+    guint added = 0;
 
-  g_assert (file_fetch);
+    g_assert (file_fetch);
 
-  /* Lock hash table, enqueue go through the list of images and move all
-     entries not in the hash table. */
-  g_mutex_lock (file_fetch->hash_mutex);
-  for (it = images; it; it = it->next) {
-    if (! g_hash_table_lookup (file_fetch->hash, (gchar*) it->data)) {
-      file_queue_push (file_fetch->queue,
-                       file_multi_open ((gchar*) it->data));
-      added++;
+    /* Lock hash table, enqueue go through the list of images and move all
+       entries not in the hash table. */
+    g_mutex_lock (file_fetch->hash_mutex);
+    for (it = images; it; it = it->next) {
+        if (! g_hash_table_lookup (file_fetch->hash, (gchar*) it->data)) {
+            file_queue_push (file_fetch->queue,
+                             file_multi_open ((gchar*) it->data));
+            added++;
+        }
+        g_free (it->data);
     }
-    g_free (it->data);
-  }
-  g_mutex_unlock (file_fetch->hash_mutex);
+    g_mutex_unlock (file_fetch->hash_mutex);
 
-  return added;
+    return added;
 }
 
 
@@ -266,22 +268,24 @@ void
 file_fetch_progress (struct file_fetch *file_fetch,
                      struct file_multi *file, gboolean status)
 {
-  static gboolean first = TRUE;
+    static gboolean first = TRUE;
 
-  GdkPixbuf *thumb;
+    GdkPixbuf *thumb;
 
-  if (first && (ui_window_get_mode (file_fetch->ui) != UI_WINDOW_MODE_THUMB)) {
-    first = FALSE;
+    if (first
+        && (ui_window_get_mode (file_fetch->ui) != UI_WINDOW_MODE_THUMB)) {
+        first = FALSE;
 
-    /* Single file mode, set image */
-    ui_window_set_image (file_fetch->ui, file,
-                         TRUE /* zoom_fit */, TRUE /* lock */);
-  }
+        /* Single file mode, set image */
+        ui_window_set_image (file_fetch->ui, file,
+                             TRUE /* zoom_fit */, TRUE /* lock */);
+    }
 
-  /* Always add thumbnail version so switching of modes is possible. */
-  thumb =  thumb_get (file, options.thumb_side, TRUE);
-  if (thumb) {
-    ui_window_add_thumbnail (file_fetch->ui, file, thumb, TRUE /* lock */);
-  }
-  ui_window_progress_progress (file_fetch->ui, 1 /* count */, TRUE /* lock */);
+    /* Always add thumbnail version so switching of modes is possible. */
+    thumb =  thumb_get (file, options.thumb_side, TRUE);
+    if (thumb) {
+        ui_window_add_thumbnail (file_fetch->ui, file, thumb, TRUE /* lock */);
+    }
+    ui_window_progress_progress (file_fetch->ui,
+                                 1 /* count */, TRUE /* lock */);
 }

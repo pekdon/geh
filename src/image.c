@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: image.c 61 2006-08-10 21:08:26Z me@pekdon.net $
- *
  * Image handling, represents the original image and the current
  * version (rotation, scaling etc)
  */
@@ -49,37 +47,37 @@ static void image_update (struct image *im);
 struct image*
 image_open (const gchar *path)
 {
-  struct image *im;
-  GError *err = NULL;
+    struct image *im;
+    GError *err = NULL;
 
-  im = g_malloc (sizeof (struct image));
+    im = g_malloc (sizeof (struct image));
 
-  /* Load original file */
-  im->pix_orig = gdk_pixbuf_new_from_file (path, &err);
-  if (err || !im->pix_orig) {
-    /* Print error message */
-    if (err) {
-      g_fprintf (stderr, "%s\n", err->message);
-      g_error_free (err);
+    /* Load original file */
+    im->pix_orig = gdk_pixbuf_new_from_file (path, &err);
+    if (err || !im->pix_orig) {
+        /* Print error message */
+        if (err) {
+            g_fprintf (stderr, "%s\n", err->message);
+            g_error_free (err);
+        }
+
+        /* Free image resources */
+        g_free (im);
+        return NULL;
     }
 
-    /* Free image resources */
-    g_free (im);
-    return NULL;
-  }
+    im->width_orig = im->width_r_orig = gdk_pixbuf_get_width (im->pix_orig);
+    im->height_orig = im->height_r_orig = gdk_pixbuf_get_height (im->pix_orig);
 
-  im->width_orig = im->width_r_orig = gdk_pixbuf_get_width (im->pix_orig);
-  im->height_orig = im->height_r_orig = gdk_pixbuf_get_height (im->pix_orig);
+    /* Setup current representation (original now) */
+    im->pix_curr = gdk_pixbuf_copy (im->pix_orig);
+    im->width_curr = im->width_orig;
+    im->height_curr = im->height_orig;
 
-  /* Setup current representation (original now) */
-  im->pix_curr = gdk_pixbuf_copy (im->pix_orig);
-  im->width_curr = im->width_orig;
-  im->height_curr = im->height_orig;
+    im->zoom = 100;
+    im->rotation = 0;
 
-  im->zoom = 100;
-  im->rotation = 0;
-
-  return im;
+    return im;
 }
 
 /**
@@ -90,12 +88,12 @@ image_open (const gchar *path)
 void
 image_close (struct image *im)
 {
-  g_assert (im);
+    g_assert (im);
 
-  g_object_unref (im->pix_orig);
-  g_object_unref (im->pix_curr);
+    g_object_unref (im->pix_orig);
+    g_object_unref (im->pix_curr);
 
-  g_free (im);
+    g_free (im);
 }
 
 /**
@@ -107,9 +105,9 @@ image_close (struct image *im)
 GdkPixbuf*
 image_get_curr (struct image *im)
 {
-  g_assert (im);
+    g_assert (im);
 
-  return im->pix_curr;
+    return im->pix_curr;
 }
 
 /**
@@ -122,12 +120,12 @@ image_get_curr (struct image *im)
 guint
 image_zoom (struct image *im, gint zoom)
 {
-  g_assert (im);
+    g_assert (im);
 
-  /* Zoom */
-  image_zoom_set (im, im->zoom + zoom);
+    /* Zoom */
+    image_zoom_set (im, im->zoom + zoom);
 
-  return zoom;
+    return zoom;
 }
 
 /**
@@ -139,18 +137,18 @@ image_zoom (struct image *im, gint zoom)
 void
 image_zoom_set (struct image *im, guint zoom)
 {
-  g_assert (im);
+    g_assert (im);
 
-  /* Sanity check */
-  if (zoom < 10) {
-    g_warning ("trying to set zoom to 0");
+    /* Sanity check */
+    if (zoom < 10) {
+        g_warning ("trying to set zoom to 0");
 
-    zoom = 10;
-  }
+        zoom = 10;
+    }
 
-  im->zoom = zoom;
+    im->zoom = zoom;
 
-  image_update (im);
+    image_update (im);
 }
 
 /**
@@ -162,28 +160,28 @@ image_zoom_set (struct image *im, guint zoom)
 void
 image_zoom_fit (struct image *im, guint width, guint height)
 {
-  guint zoom;
-  gfloat ratio, view_ratio;
+    guint zoom;
+    gfloat ratio, view_ratio;
 
-  g_assert (im);
+    g_assert (im);
 
-  /* No need to scale down if image fits in view. */
-  if ((im->width_r_orig < width) || (im->height_r_orig < height)) {
-    image_zoom_set (im, 100);
+    /* No need to scale down if image fits in view. */
+    if ((im->width_r_orig < width) || (im->height_r_orig < height)) {
+        image_zoom_set (im, 100);
 
-  } else {
-    /* Get ratio */
-    ratio = (gfloat) im->width_r_orig / (gfloat) im->height_r_orig;
-    view_ratio = (gfloat) width / (gfloat) height;
-
-    if (view_ratio > ratio) {
-      zoom = (gint) ((gfloat) height / (gfloat) im->height_r_orig * 100);
     } else {
-      zoom = (gint) ((gfloat) width / (gfloat) im->width_r_orig * 100);
-    }
+        /* Get ratio */
+        ratio = (gfloat) im->width_r_orig / (gfloat) im->height_r_orig;
+        view_ratio = (gfloat) width / (gfloat) height;
 
-    image_zoom_set (im, zoom);
-  }
+        if (view_ratio > ratio) {
+            zoom = (gint) ((gfloat) height / (gfloat) im->height_r_orig * 100);
+        } else {
+            zoom = (gint) ((gfloat) width / (gfloat) im->width_r_orig * 100);
+        }
+
+        image_zoom_set (im, zoom);
+    }
 }
 
 /**
@@ -196,25 +194,25 @@ image_zoom_fit (struct image *im, guint width, guint height)
 guint
 image_rotate (struct image *im, gint rotation)
 {
-  g_assert (im);
+    g_assert (im);
 
-  rotation = rotation + im->rotation;
+    rotation = rotation + im->rotation;
 
-  if (rotation > 0) {
-    /* Rotation left */
-    while (rotation > 360) {
-      rotation -= 360;
+    if (rotation > 0) {
+        /* Rotation left */
+        while (rotation > 360) {
+            rotation -= 360;
+        }
+    } else if (rotation < 0) {
+        /* Rotation right */
+        while (rotation < 0) {
+            rotation += 360;
+        }
     }
-  } else if (rotation < 0) {
-    /* Rotation right */
-    while (rotation < 0) {
-      rotation += 360;
-    }
-  }
 
-  image_rotate_set (im, rotation);
+    image_rotate_set (im, rotation);
 
-  return rotation;
+    return rotation;
 }
 
 /**
@@ -226,27 +224,27 @@ image_rotate (struct image *im, gint rotation)
 void
 image_rotate_set (struct image *im, guint rotation)
 {
-  g_assert (im);
+    g_assert (im);
 
-  /* Currently gdk_pixbuf only rotates in multiples of 90 */
-  rotation -= rotation % 90;
+    /* Currently gdk_pixbuf only rotates in multiples of 90 */
+    rotation -= rotation % 90;
 
-  /* Sanity check rotation */
-  if ((rotation < 0) || (rotation >= 360)) {
-    rotation = 0;
-  }
+    /* Sanity check rotation */
+    if ((rotation < 0) || (rotation >= 360)) {
+        rotation = 0;
+    }
 
-  im->rotation = rotation;
-  /* Set rotated original size */
-  if ((rotation == 90) || (rotation == 270)) {
-    im->width_r_orig = im->height_orig;
-    im->height_r_orig = im->width_orig;
-  } else {
-    im->width_r_orig = im->width_orig;
-    im->height_r_orig = im->height_orig;
-  }
+    im->rotation = rotation;
+    /* Set rotated original size */
+    if ((rotation == 90) || (rotation == 270)) {
+        im->width_r_orig = im->height_orig;
+        im->height_r_orig = im->width_orig;
+    } else {
+        im->width_r_orig = im->width_orig;
+        im->height_r_orig = im->height_orig;
+    }
 
-  image_update (im);
+    image_update (im);
 }
 
 /**
@@ -257,42 +255,47 @@ image_rotate_set (struct image *im, guint rotation)
 void
 image_update (struct image *im)
 {
-  GdkPixbuf *pix_tmp;
+    GdkPixbuf *pix_tmp;
+    guint width, height;
 
-  /* Clean old resources */
-  g_object_unref (im->pix_curr);
+    /* Clean old resources */
+    g_object_unref (im->pix_curr);
 
-  if (!im->rotation && (im->zoom == 100)) {
-    /* No modifications, use original */
-    im->pix_curr = gdk_pixbuf_copy (im->pix_orig);
+    if (!im->rotation && (im->zoom == 100)) {
+        /* No modifications, use original */
+        im->pix_curr = gdk_pixbuf_copy (im->pix_orig);
 
-  } else {
-    /* Rotate */
-    if (im->rotation != 0) {
-      im->pix_curr = gdk_pixbuf_rotate_simple (im->pix_orig, im->rotation);
     } else {
-      im->pix_curr = im->pix_orig;
+        /* Rotate */
+        if (im->rotation != 0) {
+            im->pix_curr = gdk_pixbuf_rotate_simple (im->pix_orig, 
+                                                     im->rotation);
+        } else {
+            im->pix_curr = im->pix_orig;
+        }
+
+        /* Zoom */
+        if (im->zoom != 100) {
+            width = gdk_pixbuf_get_width (im->pix_curr);
+            height = gdk_pixbuf_get_height (im->pix_curr);
+            im->width_curr =  width * (im->zoom * 0.01);
+            im->height_curr = height * (im->zoom * 0.01);
+
+            /* Scale */
+            pix_tmp = im->pix_curr;
+            im->pix_curr = gdk_pixbuf_scale_simple (im->pix_curr,
+                                                    im->width_curr,
+                                                    im->height_curr,
+                                                    GDK_INTERP_BILINEAR);
+
+            /* Clean resources */
+            if (pix_tmp != im->pix_orig) {
+                g_object_unref (pix_tmp);
+            }
+        }
     }
 
-    /* Zoom */
-    if (im->zoom != 100) {
-      im->width_curr = gdk_pixbuf_get_width (im->pix_curr) * (im->zoom * 0.01);
-      im->height_curr = gdk_pixbuf_get_height (im->pix_curr) * (im->zoom * 0.01);
-
-      /* Scale */
-      pix_tmp = im->pix_curr;
-      im->pix_curr = gdk_pixbuf_scale_simple (im->pix_curr,
-                                              im->width_curr, im->height_curr,
-                                              GDK_INTERP_BILINEAR);
-
-      /* Clean resources */
-      if (pix_tmp != im->pix_orig) {
-        g_object_unref (pix_tmp);
-      }
-    }
-  }
-
-  /* Update size */
-  im->width_curr = gdk_pixbuf_get_width (im->pix_curr);
-  im->height_curr = gdk_pixbuf_get_height (im->pix_curr);
+    /* Update size */
+    im->width_curr = gdk_pixbuf_get_width (im->pix_curr);
+    im->height_curr = gdk_pixbuf_get_height (im->pix_curr);
 }

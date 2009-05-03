@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: file_queue.c 60 2006-08-10 12:05:42Z me@pekdon.net $
- *
  * File queue and list.
  */
 
@@ -45,21 +43,21 @@
 struct file_queue*
 file_queue_new (guint refs)
 {
-  struct file_queue *queue;
+    struct file_queue *queue;
 
-  queue = g_malloc (sizeof (struct file_queue));
+    queue = g_malloc (sizeof (struct file_queue));
 
-  queue->list = NULL;
-  queue->list_mutex = g_mutex_new ();
-  queue->queue = g_async_queue_new ();
+    queue->list = NULL;
+    queue->list_mutex = g_mutex_new ();
+    queue->queue = g_async_queue_new ();
 
-  queue->active = refs;
-  queue->active_mutex = g_mutex_new ();
-  queue->active_cond = g_cond_new ();
+    queue->active = refs;
+    queue->active_mutex = g_mutex_new ();
+    queue->active_cond = g_cond_new ();
 
-  queue->stop = FALSE;
+    queue->stop = FALSE;
 
-  return queue;
+    return queue;
 }
 
 /**
@@ -70,18 +68,18 @@ file_queue_new (guint refs)
 void
 file_queue_free (struct file_queue *queue)
 {
-  g_assert (queue);
+    g_assert (queue);
 
-  if (queue->list) {
-    g_list_free (queue->list);
-  }
-  g_mutex_free (queue->list_mutex);
-  g_async_queue_unref (queue->queue);
+    if (queue->list) {
+        g_list_free (queue->list);
+    }
+    g_mutex_free (queue->list_mutex);
+    g_async_queue_unref (queue->queue);
 
-  g_mutex_free (queue->active_mutex);
-  g_cond_free (queue->active_cond);
+    g_mutex_free (queue->active_mutex);
+    g_cond_free (queue->active_cond);
 
-  g_free (queue);
+    g_free (queue);
 }
 
 /**
@@ -93,20 +91,20 @@ file_queue_free (struct file_queue *queue)
 void
 file_queue_push (struct file_queue *queue, struct file_multi *file)
 {
-  g_assert (queue);
+    g_assert (queue);
 
-  /* Add file to list of known files */
-  g_mutex_lock (queue->list_mutex);
-  queue->list = g_list_append (queue->list, file);
-  g_mutex_unlock (queue->list_mutex);
+    /* Add file to list of known files */
+    g_mutex_lock (queue->list_mutex);
+    queue->list = g_list_append (queue->list, file);
+    g_mutex_unlock (queue->list_mutex);
 
-  /* Add active */
-  g_mutex_lock (queue->active_mutex);
-  queue->active++;
-  g_mutex_unlock (queue->active_mutex);
+    /* Add active */
+    g_mutex_lock (queue->active_mutex);
+    queue->active++;
+    g_mutex_unlock (queue->active_mutex);
 
-  /* Push to work queue */
-  g_async_queue_push (queue->queue, file);
+    /* Push to work queue */
+    g_async_queue_push (queue->queue, file);
 }
 
 /**
@@ -119,19 +117,19 @@ file_queue_push (struct file_queue *queue, struct file_multi *file)
 struct file_multi*
 file_queue_pop (struct file_queue *queue)
 {
-  struct file_multi *file = NULL;
+    struct file_multi *file = NULL;
 
-  g_assert (queue);
+    g_assert (queue);
 
-  g_mutex_lock (queue->active_mutex);
-  file = (struct file_multi*) g_async_queue_try_pop (queue->queue);
-  while (!file && queue->active) {
-    g_cond_wait (queue->active_cond, queue->active_mutex);
+    g_mutex_lock (queue->active_mutex);
     file = (struct file_multi*) g_async_queue_try_pop (queue->queue);
-  }
-  g_mutex_unlock (queue->active_mutex);
+    while (!file && queue->active) {
+        g_cond_wait (queue->active_cond, queue->active_mutex);
+        file = (struct file_multi*) g_async_queue_try_pop (queue->queue);
+    }
+    g_mutex_unlock (queue->active_mutex);
 
-  return file;
+    return file;
 }
 
 /**
@@ -142,9 +140,9 @@ file_queue_pop (struct file_queue *queue)
 GList*
 file_queue_get_list (struct file_queue *queue)
 {
-  g_assert (queue);
+    g_assert (queue);
 
-  return queue->list;
+    return queue->list;
 }
 
 /**
@@ -155,12 +153,12 @@ file_queue_get_list (struct file_queue *queue)
 void
 file_queue_done (struct file_queue *queue)
 {
-  g_assert (queue);
+    g_assert (queue);
 
-  g_mutex_lock (queue->active_mutex);
-  if (queue->active > 0) {
-    queue->active--;
-  }
-  g_cond_signal (queue->active_cond);
-  g_mutex_unlock (queue->active_mutex);
+    g_mutex_lock (queue->active_mutex);
+    if (queue->active > 0) {
+        queue->active--;
+    }
+    g_cond_signal (queue->active_cond);
+    g_mutex_unlock (queue->active_mutex);
 }

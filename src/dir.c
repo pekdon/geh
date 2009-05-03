@@ -1,5 +1,5 @@
 /*
- * Copyright © 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -57,25 +57,26 @@ dir_scan_start (struct file_queue *queue, gchar **files,
                 void (*file_count_inc)(gpointer, gint),
                 gpointer file_count_inc_data)
 {
-  struct dir_scan *ds;
+    struct dir_scan *ds;
 
-  g_assert (files);
+    g_assert (files);
 
-  /* Allocate dir scanner object. */
-  ds = g_malloc (sizeof (struct dir_scan));
-  g_assert (ds);
+    /* Allocate dir scanner object. */
+    ds = g_malloc (sizeof (struct dir_scan));
+    g_assert (ds);
 
-  /* Init */
-  ds->queue = queue;
-  ds->files = files;
-  ds->file_count_inc = file_count_inc;
-  ds->file_count_inc_data = file_count_inc_data;
-  ds->stop = FALSE;
+    /* Init */
+    ds->queue = queue;
+    ds->files = files;
+    ds->file_count_inc = file_count_inc;
+    ds->file_count_inc_data = file_count_inc_data;
+    ds->stop = FALSE;
 
-  /* Start worker thread scanning directories and files */
-  ds->thread_work = g_thread_create ((GThreadFunc) &dir_scan_worker, ds /* data */, TRUE /* joinable */, NULL);
+    /* Start worker thread scanning directories and files */
+    ds->thread_work = g_thread_create ((GThreadFunc) &dir_scan_worker,
+                                       ds, TRUE, NULL);
 
-  return ds;
+    return ds;
 }
 
 /**
@@ -86,15 +87,15 @@ dir_scan_start (struct file_queue *queue, gchar **files,
 void
 dir_scan_stop (struct dir_scan *ds)
 {
-  g_assert (ds);
+    g_assert (ds);
 
-  /* No locking, should be safe. */
-  ds->stop = TRUE;
+    /* No locking, should be safe. */
+    ds->stop = TRUE;
 
-  g_thread_join (ds->thread_work);
+    g_thread_join (ds->thread_work);
 
-  /* Free resources */
-  g_free (ds);
+    /* Free resources */
+    g_free (ds);
 }
 
 /**
@@ -105,21 +106,21 @@ dir_scan_stop (struct dir_scan *ds)
 void
 dir_scan_worker (gpointer data)
 {
-  gint i;
-  struct dir_scan *ds = (struct dir_scan*) data;
+    gint i;
+    struct dir_scan *ds = (struct dir_scan*) data;
 
-  for (i = 0; ! ds->stop && ds->files[i] != NULL; i++) {
-    if (g_file_test (ds->files[i], G_FILE_TEST_IS_DIR)) {
-      if (options.recursive) {
-        dir_scan_recursive (ds, ds->files[i], options.levels);
-      }
-    } else {
-      file_queue_push (ds->queue, file_multi_open (ds->files[i]));
+    for (i = 0; ! ds->stop && ds->files[i] != NULL; i++) {
+        if (g_file_test (ds->files[i], G_FILE_TEST_IS_DIR)) {
+            if (options.recursive) {
+                dir_scan_recursive (ds, ds->files[i], options.levels);
+            }
+        } else {
+            file_queue_push (ds->queue, file_multi_open (ds->files[i]));
+        }
     }
-  }
 
-  /* Signal directory scanning done */
-  file_queue_done (ds->queue);
+    /* Signal directory scanning done */
+    file_queue_done (ds->queue);
 }
 
 /**
@@ -132,63 +133,64 @@ dir_scan_worker (gpointer data)
 void
 dir_scan_recursive (struct dir_scan *ds, const gchar *path, gint levels)
 {
-  gchar *file;
-  guint added = 0;
-  const gchar *name;
-  GDir *dir;
-  GList *list = NULL, *it;
+    gchar *file;
+    guint added = 0;
+    const gchar *name;
+    GDir *dir;
+    GList *list = NULL, *it;
 
-  /* Check that path is a directory */
-  if (! g_file_test (path, G_FILE_TEST_IS_DIR)) {
-    g_warning ("%s is not a valid directory", path);
-    return;
-  }
+    /* Check that path is a directory */
+    if (! g_file_test (path, G_FILE_TEST_IS_DIR)) {
+        g_warning ("%s is not a valid directory", path);
+        return;
+    }
 
-  /* Open directory */
-  dir = g_dir_open (path, 0, NULL);
-  if (!dir) {
-    g_warning ("unable to open %s as directory", path);
-    return;
-  }
+    /* Open directory */
+    dir = g_dir_open (path, 0, NULL);
+    if (!dir) {
+        g_warning ("unable to open %s as directory", path);
+        return;
+    }
 
-  /* Scan directory, for later sorting. */
-  while (! ds->stop && (name = g_dir_read_name (dir)) != NULL) {
-    file = g_build_filename (path, name, NULL);
-    list = g_list_prepend (list, (gpointer) file);
-  }
-  g_dir_close (dir);
+    /* Scan directory, for later sorting. */
+    while (! ds->stop && (name = g_dir_read_name (dir)) != NULL) {
+        file = g_build_filename (path, name, NULL);
+        list = g_list_prepend (list, (gpointer) file);
+    }
+    g_dir_close (dir);
 
-  /* Sort entries. */
-  list = g_list_sort (list, (GCompareFunc) &strcmp);
+    /* Sort entries. */
+    list = g_list_sort (list, (GCompareFunc) &strcmp);
 
 
-  /* First scan directories */
-  if ((levels == -1) || (levels > 0)) {
+    /* First scan directories */
+    if ((levels == -1) || (levels > 0)) {
+        for (it = g_list_first (list); it != NULL; it = g_list_next (it)) {
+            name = (const char*) it->data;
+            if (g_file_test (name, G_FILE_TEST_IS_DIR)) {
+                dir_scan_recursive (ds, name,
+                                    (levels == -1) ? levels : levels - 1);
+            }
+        }
+    }
+
+    /* Then rewind directory and scan files */
     for (it = g_list_first (list); it != NULL; it = g_list_next (it)) {
-      name = (const char*) it->data;
-      if (g_file_test (name, G_FILE_TEST_IS_DIR)) {
-        dir_scan_recursive (ds, name, (levels == -1) ? levels : levels - 1);
-      }
+        name = (const char*) it->data;
+        if (g_file_test (name, G_FILE_TEST_IS_REGULAR)) {
+            file_queue_push (ds->queue, file_multi_open (name));
+            added++;
+        }
     }
-  }
 
-  /* Then rewind directory and scan files */
-  for (it = g_list_first (list); it != NULL; it = g_list_next (it)) {
-    name = (const char*) it->data;
-    if (g_file_test (name, G_FILE_TEST_IS_REGULAR)) {
-      file_queue_push (ds->queue, file_multi_open (name));
-      added++;
+    /* Add to total number of items (progress bar) */
+    if (added > 0) {
+        ds->file_count_inc (ds->file_count_inc_data, added);
     }
-  }
 
-  /* Add to total number of items (progress bar) */
-  if (added > 0) {
-    ds->file_count_inc (ds->file_count_inc_data, added);
-  }
-
-  /* Cleanup */
-  for (it = g_list_first (list); it != NULL; it = g_list_next (it)) {
-    free (it->data);
-  }
-  g_list_free (list);
+    /* Cleanup */
+    for (it = g_list_first (list); it != NULL; it = g_list_next (it)) {
+        free (it->data);
+    }
+    g_list_free (list);
 }

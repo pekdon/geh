@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Claes Nästén <me@pekdon.net>
+ * Copyright © 2006-2009 Claes Nästén <me@pekdon.net>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: util.c 59 2006-08-10 09:52:56Z me@pekdon.net $
- *
  * Utility functions.
  */
 
@@ -47,23 +45,23 @@
 const gchar*
 util_stripos (const gchar *haystack, const gchar *needle)
 {
-  gchar *haystack_up = g_strup (g_strdup (haystack));
-  gchar *needle_up = g_strup (g_strdup (needle));
+    gchar *haystack_up = g_strup (g_strdup (haystack));
+    gchar *needle_up = g_strup (g_strdup (needle));
 
-  const gchar *pos;
+    const gchar *pos;
 
-  /* Find needle in haystack */ 
-  pos = strstr (haystack_up, needle_up);
-  if (pos) {
-    /* Get position in original stack */
-    pos = haystack + ((pos - haystack_up) / sizeof (pos[0]));
-  }
+    /* Find needle in haystack */ 
+    pos = strstr (haystack_up, needle_up);
+    if (pos) {
+        /* Get position in original stack */
+        pos = haystack + ((pos - haystack_up) / sizeof (pos[0]));
+    }
 
-  /* Clean resources */
-  g_free (haystack_up);
-  g_free (needle_up);
+    /* Clean resources */
+    g_free (haystack_up);
+    g_free (needle_up);
 
-  return pos;
+    return pos;
 }
 
 /**
@@ -76,22 +74,22 @@ util_stripos (const gchar *haystack, const gchar *needle)
 gboolean
 util_str_in (const gchar *str, gboolean casei, ...)
 {
-  va_list ap;
-  const gchar *str_cmp;
+    va_list ap;
+    const gchar *str_cmp;
 
-  va_start (ap, casei);
-  while ((str_cmp = va_arg (ap, const gchar*)) != NULL) {
-    if (casei) {
-      if (g_strcasecmp (str, str_cmp) == 0) {
-        return TRUE;
-      }
-    } else {
-      if (strcmp (str, str_cmp) == 0) {
-        return TRUE;
-      }
+    va_start (ap, casei);
+    while ((str_cmp = va_arg (ap, const gchar*)) != NULL) {
+        if (casei) {
+            if (g_strcasecmp (str, str_cmp) == 0) {
+                return TRUE;
+            }
+        } else {
+            if (strcmp (str, str_cmp) == 0) {
+                return TRUE;
+            }
+        }
     }
-  }
-  va_end (ap);
+    va_end (ap);
   
-  return FALSE;
+    return FALSE;
 }
