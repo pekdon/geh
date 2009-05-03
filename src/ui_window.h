@@ -23,8 +23,6 @@
  */
 
 /**
- * $Id: ui_window.h 63 2006-08-14 13:16:53Z me@pekdon.net $
- *
  * UI window handling code.
  */
 
@@ -49,6 +47,10 @@
 #define UI_WINDOW_MODE_SLIDE 1
 #define UI_WINDOW_MODE_THUMB 2
 
+#define UI_THUMB_PADDING 8
+#define UI_THUMB_CHARS 14
+#define UI_SLIDE_PADDING 44
+
 /**
  * Struct defining UI window.
  */
@@ -66,6 +68,7 @@ struct ui_window {
   GtkScrolledWindow *icon_view_window; /** Thumbnail Area */
   GtkListStore *icon_store; /**< Thumbnail Store */
   GtkTreeIter icon_iter; /**< Thumbnail Store Iterator */
+  GtkTreeIter icon_iter_add; /**< Thumbnail Store Iterator for adding data */
   guint thumbnails; /**< Number of thumbnails */
 
   guint mode; /**< Current mode of window. */

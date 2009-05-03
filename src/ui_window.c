@@ -34,6 +34,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <glib/gstdio.h>
 
+#include <string.h>
 #include <stdlib.h>
 
 #include "geh.h"
@@ -58,6 +59,9 @@ static void ui_window_callback_menu_rotate_left (GtkMenuItem *item, gpointer dat
 static void ui_window_callback_menu_rotate_right (GtkMenuItem *item, gpointer data);
 static void ui_window_callback_menu_file_save (GtkMenuItem *item, gpointer data);
 static void ui_window_callback_menu_file_rename (GtkMenuItem *item, gpointer data);
+
+static void ui_window_slide_next (struct ui_window *ui);
+static void ui_window_slide_prev (struct ui_window *ui);
 
 /**
  * Create new ui_window.
@@ -90,12 +94,14 @@ ui_window_new (void)
 
   g_signal_connect (G_OBJECT (ui->window), "delete_event",
                     G_CALLBACK (gtk_main_quit), NULL);
-/*
+  g_signal_connect (G_OBJECT (ui->window), "key_press_event",
+                    G_CALLBACK (ui_window_callback_key_press), ui);
   g_signal_connect (G_OBJECT (ui->image_window), "key_press_event",
                     G_CALLBACK (ui_window_callback_key_press), ui);
+  /*
   g_signal_connect (G_OBJECT (ui->window), "size-allocate",
                     G_CALLBACK (ui_window_callback_size_allocate), ui);
-*/
+  */
 
   /* Create vertical box */
   ui->vbox = GTK_VBOX (gtk_vbox_new (FALSE /* homogeneous */,
@@ -123,9 +129,13 @@ ui_window_new (void)
 
   /* Create thumbnail area */
   ui->icon_view_window = GTK_SCROLLED_WINDOW (gtk_scrolled_window_new (NULL, NULL));
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (ui->icon_view_window),
+                                  GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
   ui->icon_view = GTK_ICON_VIEW (gtk_icon_view_new_with_model (GTK_TREE_MODEL (ui->icon_store)));
 
   /* Map fields to view */
+  gtk_icon_view_set_item_width (ui->icon_view, options.thumb_side + UI_THUMB_PADDING);
   gtk_icon_view_set_pixbuf_column (ui->icon_view, UI_ICON_STORE_THUMB);
 
   /* Make names editable */
@@ -231,26 +241,26 @@ ui_window_get_mode (struct ui_window *ui)
 void
 ui_window_set_mode (struct ui_window *ui, guint mode)
 {
-  gint width, height;
+  gint max_position;
+  gint policy_h = GTK_POLICY_AUTOMATIC, policy_v = GTK_POLICY_AUTOMATIC;
 
   g_assert (ui);
 
   /* Get window height, used when calculate the position of the pane */
-  gtk_window_get_size (ui->window, &width, &height);
+  g_object_get(ui->pane, "max-position", &max_position, NULL);
 
   if (mode == UI_WINDOW_MODE_FULL) {
     /* Full-screen mode, hiding the icon view completely */
-    gtk_paned_set_position (ui->pane, height);
+    gtk_paned_set_position (ui->pane, max_position);
 
   } else if (mode == UI_WINDOW_MODE_SLIDE) {
     /* Slide-show mode, having a thumbnail height bottom border with icons */
-    gtk_paned_set_position (ui->pane, height - options.thumb_side - 64);
+    gtk_paned_set_position (ui->pane, max_position - options.thumb_side - UI_SLIDE_PADDING);
 
     /* Set columns to display in thumbnail mode */
-    gtk_icon_view_set_columns (ui->icon_view, ui->thumbnails);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (ui->icon_view_window),
-                                    GTK_POLICY_ALWAYS, GTK_POLICY_NEVER);
-
+    gtk_icon_view_set_columns (ui->icon_view, ui->thumbnails); 
+    policy_h = GTK_POLICY_ALWAYS;
+    policy_v = GTK_POLICY_NEVER;
 
   } else if (mode == UI_WINDOW_MODE_THUMB) {
     /* Thumbnail mode, hiding the image view completely */
@@ -258,9 +268,12 @@ ui_window_set_mode (struct ui_window *ui, guint mode)
 
     /* Set columns to display in thumbnail mode */
     gtk_icon_view_set_columns (ui->icon_view, -1);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (ui->icon_view_window),
-                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    policy_h = GTK_POLICY_NEVER;
   }
+
+  /* Set scroll policy. 
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (ui->icon_view_window),
+  policy_h, policy_v); */
 
   /* Store mode */
   ui->mode = mode;
@@ -289,7 +302,8 @@ ui_window_set_image (struct ui_window *ui, struct file_multi *file,
   }
 
   /* Update title */
-  title = g_strdup_printf ("%s: %s", PACKAGE_NAME, file_multi_get_name (file));
+  title = g_strdup_printf ("%s: %s",
+                           PACKAGE_NAME, file_multi_get_name (file));
   gtk_window_set_title (ui->window, title);
   g_free (title);
 
@@ -331,6 +345,8 @@ ui_window_add_thumbnail (struct ui_window *ui,
                          struct file_multi *file, GdkPixbuf *pix,
                          gboolean lock)
 {
+  gchar *name, *name_short;
+
   g_assert (ui);
 
   /* Thread safety */
@@ -338,18 +354,25 @@ ui_window_add_thumbnail (struct ui_window *ui,
     gdk_threads_enter ();
   }
 
-
   /* Set correct amount of columns */
   ui->thumbnails++;
   if (ui->mode != UI_WINDOW_MODE_THUMB) {
     gtk_icon_view_set_columns (ui->icon_view, ui->thumbnails);
   }
 
+
+  /* Limit length of name. */
+  name = name_short = file_multi_get_name (file);
+  if (strlen (name) > UI_THUMB_CHARS) {
+      name_short = g_strdup (name);
+      g_sprintf (name_short + UI_THUMB_CHARS - 4, "...");
+  }
+
   /* Add thumbnail */
-  gtk_list_store_append (ui->icon_store, &ui->icon_iter);
-  gtk_list_store_set (ui->icon_store, &ui->icon_iter,
+  gtk_list_store_append (ui->icon_store, &ui->icon_iter_add);
+  gtk_list_store_set (ui->icon_store, &ui->icon_iter_add,
                       UI_ICON_STORE_FILE, file,
-                      UI_ICON_STORE_NAME, file_multi_get_name (file),
+                      UI_ICON_STORE_NAME, name_short,
                       UI_ICON_STORE_THUMB, pix,
                       -1);
 
@@ -490,6 +513,16 @@ ui_window_callback_key_press (GtkWidget *widget, GdkEventKey *key,
   case GDK_Q:
     gtk_main_quit ();
     break;
+  case GDK_n:
+  case GDK_N:
+      /* Next image (if in slideshow/full mode). */
+      ui_window_slide_next (ui);
+      break;
+  case GDK_p:
+  case GDK_P:
+      /* Prev image (if in slideshow/full mode). */
+      ui_window_slide_prev (ui);      
+      break;
   default:
     return TRUE;
     break;
@@ -548,12 +581,11 @@ ui_window_callback_image (GtkIconView *icon_view,
   gtk_tree_model_get_iter (GTK_TREE_MODEL (ui->icon_store),
                            &ui->icon_iter, tree_path);
   gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
-                      UI_ICON_STORE_FILE, &file,
-                      -1);
+                      UI_ICON_STORE_FILE, &file, -1);
 
   /* Activate image */
   /* FIXME: This seems not to zoom when switching mode from thumbnail mode */
-  ui_window_set_image (ui, file, TRUE /* zoom_fit */, FALSE /* lock */);
+  ui_window_set_image (ui, file, TRUE, FALSE);
 }
 
 /**
@@ -989,4 +1021,40 @@ ui_window_progress_add (gpointer data, gint count)
   }
 
   ui_window_progress_set_total (ui, ui->progress_total + count);
+}
+
+/**
+ * Show the next image in the set.
+ */
+void
+ui_window_slide_next (struct ui_window *ui)
+{
+    struct file_multi *file;
+
+    if (gtk_tree_model_iter_next (GTK_TREE_MODEL (ui->icon_store),
+                                  &ui->icon_iter)) {
+        gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
+                            UI_ICON_STORE_FILE, &file, -1);
+        ui_window_set_image (ui, file, TRUE, FALSE);        
+    }
+}
+
+/**
+ * Show the previous image in the set.
+ */
+void
+ui_window_slide_prev (struct ui_window *ui)
+{
+    struct file_multi *file;
+    GtkTreePath *path;
+
+    path = gtk_tree_model_get_path (GTK_TREE_MODEL (ui->icon_store), 
+                                    &ui->icon_iter);
+    if (gtk_tree_path_prev (path)
+        && gtk_tree_model_get_iter (GTK_TREE_MODEL (ui->icon_store), 
+                                    &ui->icon_iter, path)) {
+        gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
+                            UI_ICON_STORE_FILE, &file, -1);
+        ui_window_set_image (ui, file, TRUE, FALSE);        
+    }
 }
