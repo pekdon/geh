@@ -152,29 +152,20 @@ dir_scan_recursive (struct dir_scan *ds, const gchar *path, gint levels)
         return;
     }
 
-    /* Scan directory, for later sorting. */
+    /* Scan directory, store files for sorting later on. */
     while (! ds->stop && (name = g_dir_read_name (dir)) != NULL) {
         file = g_build_filename (path, name, NULL);
-        list = g_list_prepend (list, (gpointer) file);
+        if (g_file_test (file, G_FILE_TEST_IS_DIR)) {
+            dir_scan_recursive (ds, file,
+                                (levels == -1) ? levels : levels - 1);
+        } else {
+            list = g_list_insert_sorted (list, (gpointer) file,
+                                         (GCompareFunc) &strcmp);
+        }
     }
     g_dir_close (dir);
 
-    /* Sort entries. */
-    list = g_list_sort (list, (GCompareFunc) &strcmp);
-
-
-    /* First scan directories */
-    if ((levels == -1) || (levels > 0)) {
-        for (it = g_list_first (list); it != NULL; it = g_list_next (it)) {
-            name = (const char*) it->data;
-            if (g_file_test (name, G_FILE_TEST_IS_DIR)) {
-                dir_scan_recursive (ds, name,
-                                    (levels == -1) ? levels : levels - 1);
-            }
-        }
-    }
-
-    /* Then rewind directory and scan files */
+    /* Scan files. */
     for (it = g_list_first (list); it != NULL; it = g_list_next (it)) {
         name = (const char*) it->data;
         if (g_file_test (name, G_FILE_TEST_IS_REGULAR)) {
