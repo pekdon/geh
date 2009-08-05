@@ -123,6 +123,8 @@ parse_str_options (void)
             return 1;
         }
     }
+
+    return 0;
 }
 
 /**
