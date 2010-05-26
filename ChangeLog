@@ -3,6 +3,9 @@
 	* src/ui_window.c (ui_window_set_image): Use idle function to zoom
 	image to fit window giving the ui sizes time to get updated.
 
+	* src/ui_window.c (callback_key_press): Add keybindings on +, -
+	and F11 for zoom in, zoom out and fullscreen toggling.
+
 	* src/main.c (main): Remove root window mode as it was broken and
 	I am now using wallpaperd to set the background image.
 
