@@ -54,6 +54,8 @@ static void callback_icon_edited (GtkCellRendererText *cell,
                                   gchar *path_string, gchar *text,
                                   gpointer data);
 
+static gboolean idle_zoom_fit (gpointer data);
+
 static gboolean callback_menu (GtkWidget *widget, GdkEvent *event);
 static void callback_menu_zoom_fit (GtkMenuItem *item, gpointer data);
 static void callback_menu_zoom_in (GtkMenuItem *item, gpointer data);
@@ -99,12 +101,6 @@ ui_window_new (void)
                       G_CALLBACK (gtk_main_quit), NULL);
     g_signal_connect (G_OBJECT (ui->window), "key_press_event",
                       G_CALLBACK (callback_key_press), ui);
-    g_signal_connect (G_OBJECT (ui->image_window), "key_press_event",
-                      G_CALLBACK (callback_key_press), ui);
-    /*
-      g_signal_connect (G_OBJECT (ui->window), "size-allocate",
-      G_CALLBACK (callback_size_allocate), ui);
-    */
 
     /* Create vertical box */
     ui->vbox = GTK_VBOX (gtk_vbox_new (FALSE /* homogeneous */,
@@ -316,8 +312,9 @@ ui_window_set_image (struct ui_window *ui, struct file_multi *file,
     ui->image_data = image_open (file_multi_get_path (file));
     if (ui->image_data) {
         if (zoom_fit) {
-            /* Zoom and display file */
-            callback_menu_zoom_fit (NULL, (void*) ui);
+            /* Use an idle function so that the UI gets to update
+               its size before zooming to fit. */
+            g_idle_add (&idle_zoom_fit, (void*) ui);
         } else {
             /* Display file */
             ui_window_update_image (ui);
@@ -482,6 +479,13 @@ ui_window_update_image (struct ui_window *ui)
                                image_get_curr (ui->image_data));
 }
 
+gboolean
+idle_zoom_fit (gpointer data)
+{
+    callback_menu_zoom_fit (NULL, data);
+    return FALSE;
+}
+
 /**
  * Callback to handle key press events.
  *
@@ -589,7 +593,6 @@ callback_image (GtkIconView *icon_view, GtkTreePath *tree_path, gpointer data)
                         UI_ICON_STORE_FILE, &file, -1);
 
     /* Activate image */
-    /* FIXME: This seems not to zoom when switching mode from thumbnail mode */
     ui_window_set_image (ui, file, TRUE, FALSE);
 }
 

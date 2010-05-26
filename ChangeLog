@@ -1,5 +1,8 @@
 2010-05-26  Claes Nästén  <me@pekdon.net>
 
+	* src/ui_window.c (ui_window_set_image): Use idle function to zoom
+	image to fit window giving the ui sizes time to get updated.
+
 	* src/main.c (main): Remove root window mode as it was broken and
 	I am now using wallpaperd to set the background image.
 

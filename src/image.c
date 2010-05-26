@@ -141,14 +141,13 @@ image_zoom_set (struct image *im, guint zoom)
 
     /* Sanity check */
     if (zoom < 10) {
-        g_warning ("trying to set zoom to 0");
-
         zoom = 10;
     }
 
-    im->zoom = zoom;
-
-    image_update (im);
+    if (im->zoom != zoom) {
+        im->zoom = zoom;
+        image_update (im);
+    }
 }
 
 /**
