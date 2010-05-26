@@ -31,6 +31,7 @@ geh_SOURCES = dir.c dir.h \
 	file_fetch_img.c file_fetch_img.h \
 	file_multi.c file_multi.h \
 	file_queue.c file_queue.h \
+	geh.h \
 	image.c image.h \
 	md5.c md5.h \
 	thumb.c thumb.h \
