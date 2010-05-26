@@ -56,6 +56,8 @@
  */
 struct ui_window {
   GtkWindow *window; /**< Window */
+  gboolean is_fullscreen; /**< Set to TRUE when window is fullscreen. */
+
   GtkVBox *vbox; /**< Vertical box for pane + progress */
   GtkPaned *pane; /**< Main pain separating thumbnail view from image */
   guint width_alloc_prev; /**< Previous width allocation for window. */

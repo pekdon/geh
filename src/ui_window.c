@@ -46,8 +46,6 @@ static void ui_window_update_image (struct ui_window *ui);
 /* Callbacks */
 static gboolean callback_key_press (GtkWidget *widget,
                                     GdkEventKey *key, gpointer data);
-static void callback_size_allocate (GtkWidget *widget,
-                                    GtkAllocation *allocation, gpointer data);
 static void callback_image (GtkIconView *icon_view, GtkTreePath *path, gpointer data);
 static void callback_zoom (GtkWidget *widget, GdkEventScroll *event, gpointer user_Data);
 static void callback_icon_edited (GtkCellRendererText *cell,
@@ -79,6 +77,7 @@ ui_window_new (void)
 
     ui = g_malloc (sizeof (struct ui_window));
 
+    ui->is_fullscreen = FALSE;
     ui->width_alloc_prev = 0;
     ui->height_alloc_prev = 0;
     ui->thumbnails = 0;
@@ -532,40 +531,28 @@ callback_key_press (GtkWidget *widget, GdkEventKey *key, gpointer data)
         /* Prev image (if in slideshow/full mode). */
         slide_prev (ui);      
         break;
+    case GDK_minus:
+        image_zoom (ui->image_data, -10);
+        ui_window_update_image (ui);
+        break;
+    case GDK_plus:
+        image_zoom (ui->image_data, 10);
+        ui_window_update_image (ui);
+        break;
+    case GDK_F11:
+        if (ui->is_fullscreen) {
+            gtk_window_unfullscreen (ui->window);            
+        } else {
+            gtk_window_fullscreen (ui->window);
+        }
+        ui->is_fullscreen = ui->is_fullscreen == TRUE ? FALSE : TRUE;
+        break;
     default:
         return FALSE;
         break;
     }
 
     return TRUE;
-}
-
-/**
- * Size changed callback.
- *
- * @param widget GtkWidget (ui->window).
- * @param allocation GtkAllocation on widget.
- * @param data Pointer to struct ui_window.
- */
-void
-callback_size_allocate (GtkWidget *widget, GtkAllocation *allocation,
-                        gpointer data)
-{
-    struct ui_window *ui = (struct ui_window*) data;
-
-    if ((GTK_WIDGET (ui->window) == widget)
-        && ((ui->width_alloc_prev != allocation->width)
-            || (ui->height_alloc_prev != allocation->height))) {
-        /* Size changed */
-        ui->width_alloc_prev = allocation->width;
-        ui->height_alloc_prev = allocation->height;
-
-        if (ui->mode == UI_WINDOW_MODE_SLIDE) {
-            /* Slide-show mode, having a thumbnail height bottom
-               border with icons */
-            gtk_paned_set_position (ui->pane, -options.thumb_side);
-        }
-    }
 }
 
 /**
