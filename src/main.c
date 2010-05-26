@@ -129,14 +129,12 @@ int
 main (int argc, char *argv[])
 {
     gint file_count = 0;
-    gboolean stop = FALSE;
 
     GList *it;
     GOptionContext *context;
 
     struct ui_window *ui;
     struct dir_scan *dir_scan;
-    struct file_multi *file;
     struct file_fetch *file_fetch;
     struct file_queue *file_queue;
 

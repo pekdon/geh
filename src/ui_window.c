@@ -533,11 +533,11 @@ callback_key_press (GtkWidget *widget, GdkEventKey *key, gpointer data)
         slide_prev (ui);      
         break;
     default:
-        return TRUE;
+        return FALSE;
         break;
     }
 
-    return FALSE;
+    return TRUE;
 }
 
 /**
