@@ -61,10 +61,6 @@ struct _options {
     gint win_width; /**< Width of window. */
     gint win_height; /**< Width of window. */
 
-    gboolean root; /**< Root flag. */
-    guint root_mode; /**< Root mode internal representation. */
-    gchar *root_mode_str; /**< Root image mode. */
-    gchar *root_color; /**< Root background color. */
     guint thumb_side; /**< Maximum size of thumbnail in pixels. */
 
     gboolean recursive; /**< Recursive directory scanning. */

@@ -41,7 +41,6 @@
 #include "file_multi.h"
 #include "file_queue.h"
 #include "ui_window.h"
-#include "root.h"
 
 /* Initialize options */
 struct _options options = {
@@ -52,10 +51,6 @@ struct _options options = {
     FALSE /* win_nodecor */,
     760 /* win_width */,
     740 /* win_height */,
-    FALSE /* root */,
-    ROOT_MODE_CENTER /* root_mode */,
-    NULL /* root_mode_str */,
-    "#000000" /* root_color */,
     128 /* thumb_side */,
     FALSE /* recursive */,
     -1 /* levels */,
@@ -66,14 +61,11 @@ struct _options options = {
  * Command line parsing structure.
  */
 static GOptionEntry cmdopt[] = {
-    {"background", 'b', 0, G_OPTION_ARG_NONE, &options.root, "Background mode"},
-    {"color", 'c', 0, G_OPTION_ARG_STRING, &options.root_color, "Background color"},
     {"height", 'H', 0, G_OPTION_ARG_INT, &options.win_height, "Window height"},
     {"levels", 'l', 0, G_OPTION_ARG_INT, &options.levels, "Levels of recursion"},
     {"mode", 'm', 0, G_OPTION_ARG_STRING, &options.mode_str, "Image display mode"},
     {"nodecor", 'n', 0, G_OPTION_ARG_NONE, &options.win_nodecor, "No decor for window"},
     {"recursive", 'r', 0, G_OPTION_ARG_NONE, &options.recursive, "Recursive directory scanning"},
-    {"set", 's', 0, G_OPTION_ARG_STRING, &options.root_mode_str, "Background mode"},
     {"thumbside", 't', 0, G_OPTION_ARG_INT, &options.thumb_side, "Thumbnail size in pixels"},
     {"timeout", 'T', 0, G_OPTION_ARG_INT, &options.timeout, "Display window for seconds"},
     {"width", 'W', 0, G_OPTION_ARG_INT, &options.win_width, "Window width"},
@@ -98,28 +90,8 @@ parse_str_options (void)
             options.mode = UI_WINDOW_MODE_FULL;
         } else if (! g_strcasecmp ("SLIDE", options.mode_str)) {
             options.mode = UI_WINDOW_MODE_SLIDE;
-        } else if (! g_strcasecmp ("ROOT", options.mode_str)) {
-            options.mode = -1;
         } else {
             g_warning ("invalid mode %s", options.mode_str);
-            return 1;
-        }
-    }
-
-    /* Get mode to use */
-    if (options.root_mode_str) {
-        if (! g_strcasecmp ("CENTER", options.root_mode_str)) {
-            options.root_mode = ROOT_MODE_CENTER;
-        } else if (! g_strcasecmp ("SCALE", options.root_mode_str)) {
-            options.root_mode = ROOT_MODE_SCALE;
-        } else if (! g_strcasecmp ("CROP", options.root_mode_str)) {
-            options.root_mode = ROOT_MODE_CROP;
-        } else if (! g_strcasecmp ("FILL", options.root_mode_str)) {
-            options.root_mode = ROOT_MODE_FILL;
-        } else if (! g_strcasecmp ("TILE", options.root_mode_str)) {
-            options.root_mode = ROOT_MODE_TILE;
-        } else {
-            g_warning ("invalid root mode %s", options.root_mode_str);
             return 1;
         }
     }
@@ -200,59 +172,47 @@ main (int argc, char *argv[])
     gtk_set_locale ();
     gtk_init (&argc, &argv);
 
-    if (options.mode != -1) {
-        /* Create UI window */
-        ui = ui_window_new ();
+    /* Create UI window */
+    ui = ui_window_new ();
 
-        /* Fallback mode check */
-        if (! options.mode_str) {
-            options.mode = (file_count > 1) 
-                ? UI_WINDOW_MODE_SLIDE : UI_WINDOW_MODE_FULL;
-        }
-
-        ui_window_show (ui);
-        ui_window_progress_set_total (ui, file_count);
-        ui_window_set_mode (ui, options.mode);
-
-        /* Scan dirs and fetch files that is added to the thumbnail view.
-           The file queue is created with one reference owned by the dir
-           scanner. */
-        file_queue = file_queue_new (1);
-        dir_scan = dir_scan_start (file_queue, options.files,
-                                   &ui_window_progress_add, (gpointer) ui);
-        file_fetch = file_fetch_start (file_queue, options.file_list, ui);
-
-        if (options.timeout > 0) {
-            g_timeout_add (options.timeout * 1000, main_timeout_quit, NULL);
-        }
-
-        /* Enter main loop */
-        gdk_threads_enter ();
-        gtk_main ();
-        gdk_threads_leave ();
-
-        /* Cleanup after fetching of files */
-        dir_scan_stop (dir_scan);
-        file_fetch_stop (file_fetch);
-
-        /* Free UI after stopping of scanning as it uses UI */
-        ui_window_free (ui);
-
-        for (it = file_queue_get_list (file_queue); it; it = g_list_next (it)) {
-            file_multi_close ((struct file_multi*) it->data);
-        }
-        file_queue_free (file_queue);
-
-    } else {
-        file = file_multi_open (options.files[0]);
-        if (! file_multi_need_fetch (file) || file_multi_fetch (file, &stop)) {
-            /* Root mode */
-            root_image_set_image (file, options.root_color, options.root_mode);
-        } else {
-            g_warning ("Failed to fetch %s", argv[argc -1 ]);
-        }
-        file_multi_close (file);
+    /* Fallback mode check */
+    if (! options.mode_str) {
+        options.mode = (file_count > 1) 
+            ? UI_WINDOW_MODE_SLIDE : UI_WINDOW_MODE_FULL;
     }
+
+    ui_window_show (ui);
+    ui_window_progress_set_total (ui, file_count);
+    ui_window_set_mode (ui, options.mode);
+
+    /* Scan dirs and fetch files that is added to the thumbnail view.
+       The file queue is created with one reference owned by the dir
+       scanner. */
+    file_queue = file_queue_new (1);
+    dir_scan = dir_scan_start (file_queue, options.files,
+                               &ui_window_progress_add, (gpointer) ui);
+    file_fetch = file_fetch_start (file_queue, options.file_list, ui);
+
+    if (options.timeout > 0) {
+        g_timeout_add (options.timeout * 1000, main_timeout_quit, NULL);
+    }
+
+    /* Enter main loop */
+    gdk_threads_enter ();
+    gtk_main ();
+    gdk_threads_leave ();
+
+    /* Cleanup after fetching of files */
+    dir_scan_stop (dir_scan);
+    file_fetch_stop (file_fetch);
+
+    /* Free UI after stopping of scanning as it uses UI */
+    ui_window_free (ui);
+
+    for (it = file_queue_get_list (file_queue); it; it = g_list_next (it)) {
+        file_multi_close ((struct file_multi*) it->data);
+    }
+    file_queue_free (file_queue);
 
     return 0;
 }

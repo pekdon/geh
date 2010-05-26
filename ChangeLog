@@ -1,5 +1,8 @@
 2010-05-26  Claes Nästén  <me@pekdon.net>
 
+	* src/main.c (main): Remove root window mode as it was broken and
+	I am now using wallpaperd to set the background image.
+
 	* autogen.sh: Updated autogen script to use non-version specific
 	tools before trying with a specific version and bail out if
 	execution fails.
