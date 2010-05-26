@@ -1,3 +1,9 @@
+2010-05-26  Claes Nästén  <me@pekdon.net>
+
+	* autogen.sh: Updated autogen script to use non-version specific
+	tools before trying with a specific version and bail out if
+	execution fails.
+
 2006-08-14  Claes Nästén  <me{@}pekdon{.}net>
 
 	* src/ui_winodw.c (ui_window_callback_menu_file_rename):

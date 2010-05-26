@@ -24,8 +24,6 @@
 #
 
 #
-# $Id$
-#
 # Script to generate configure script with the help of autotools.
 #
 
@@ -57,15 +55,20 @@ find_fallback_and_execute()
 
  printf " $1"
  $command_found $4
+
+ if [ $? -ne 0 ]; then
+     printf "\nfailed to execute %s, aborting!\n" $command_found
+     exit 1
+ fi
 }
 
 # Begin output
 echo "Generating build scripts, this might take a while."
 
-find_fallback_and_execute "aclocal" "aclocal-1.10" "aclocal" ""
-find_fallback_and_execute "autoheader" "autoheader-2.59" "autoheader" ""
-find_fallback_and_execute "autoconf" "autoconf-2.59" "autoconf" ""
-find_fallback_and_execute "automake" "automake-1.10" "automake" "-a"
+find_fallback_and_execute "aclocal" "aclocal" "aclocal-1.11" ""
+find_fallback_and_execute "autoheader" "autoheader" "autoheader-2.65" ""
+find_fallback_and_execute "autoconf" "autoconf" "autoconf-2.65" ""
+find_fallback_and_execute "automake" "automake" "automake-1.11" "-a"
 
 # End output
 echo ""
