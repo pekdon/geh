@@ -6,9 +6,6 @@
 	* src/ui_window.c (callback_key_press): Add keybindings on +, -
 	and F11 for zoom in, zoom out and fullscreen toggling.
 
-	* src/main.c (main): Remove root window mode as it was broken and
-	I am now using wallpaperd to set the background image.
-
 	* autogen.sh: Updated autogen script to use non-version specific
 	tools before trying with a specific version and bail out if
 	execution fails.

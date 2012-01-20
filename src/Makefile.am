@@ -35,6 +35,7 @@ geh_SOURCES = dir.c dir.h \
 	image.c image.h \
 	md5.c md5.h \
 	thumb.c thumb.h \
+	root.c root.h \
 	ui_window.c ui_window.h \
 	util.c util.h \
 	main.c
