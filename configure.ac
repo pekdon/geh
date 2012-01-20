@@ -22,10 +22,8 @@ dnl CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 dnl SOFTWARE.
 dnl
 
-dnl $Id$
-
 dnl init autoconf / automake
-AC_INIT(geh, 0.2.0)
+AC_INIT(geh, 0.3.0)
 AC_CONFIG_SRCDIR(src/main.c)
 AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
@@ -37,11 +35,15 @@ AC_PROG_INSTALL
 
 dnl search for headers
 AC_STDC_HEADERS
-AC_HAVE_HEADERS(sys/types.h sys/stat.h unistd.h)
+AC_HAVE_HEADERS(sys/types.h sys/stat.h unistd.h locale.h)
 
 dnl check required libraries
-AM_PATH_GLIB_2_0(2.0.0,,AC_MSG_ERROR(GLIB >= 2.0.0 not installed.))
-AM_PATH_GTK_2_0(2.8.0,,AC_MSG_ERROR(GTK+2 >= 2.8.0 not installed.),gthread)
+PKG_CHECK_MODULES([gtk3], [gtk+-3.0 >= 3.0.0], HAVE_GTK3=yes, HAVE_GTK3=no)
+if test "x$HAVE_GTK3" = "xyes"; then
+   AC_DEFINE(HAVE_GTK3, [1], [define to 1 if you have gtk+-3.0])
+else
+   AC_MSG_ERROR([Could not find gtk+-3.0 >= 3.0.0, required dependency.])
+fi
 
 dnl output makefiles
 AC_OUTPUT(Makefile doc/Makefile src/Makefile)

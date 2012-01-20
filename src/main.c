@@ -33,6 +33,7 @@
 #include <gtk/gtk.h>
 #include <glib/gstdio.h>
 #include <stdlib.h>
+#include <locale.h>
 
 #include "geh.h"
 
@@ -138,6 +139,8 @@ main (int argc, char *argv[])
     struct file_fetch *file_fetch;
     struct file_queue *file_queue;
 
+    setlocale (LC_ALL, "");
+
     /* Parse command line options */
     context = g_option_context_new ("");
     g_option_context_add_main_entries (context, cmdopt, NULL);
@@ -167,7 +170,6 @@ main (int argc, char *argv[])
 
     gdk_threads_init ();
 
-    gtk_set_locale ();
     gtk_init (&argc, &argv);
 
     /* Create UI window */

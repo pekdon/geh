@@ -498,48 +498,48 @@ callback_key_press (GtkWidget *widget, GdkEventKey *key, gpointer data)
     struct ui_window *ui = (struct ui_window*) data;
 
     switch (key->keyval) {
-    case GDK_f:
+    case GDK_KEY_f:
         callback_menu_zoom_fit (NULL, ui);
         break;
-    case GDK_F: /* Full mode */
+    case GDK_KEY_F: /* Full mode */
         ui_window_set_mode (ui, UI_WINDOW_MODE_FULL);
         break;
-    case GDK_s: /* Slide mode */
+    case GDK_KEY_s: /* Slide mode */
         ui_window_set_mode (ui, UI_WINDOW_MODE_SLIDE);
         break;
-    case GDK_S:
+    case GDK_KEY_S:
         callback_menu_file_save (NULL, ui);
         break;
-    case GDK_R:
+    case GDK_KEY_R:
         callback_menu_file_rename (NULL, ui);
         break;
-    case GDK_t: /* Thumb mode */
-    case GDK_T:
+    case GDK_KEY_t: /* Thumb mode */
+    case GDK_KEY_T:
         ui_window_set_mode (ui, UI_WINDOW_MODE_THUMB);
         break;
-    case GDK_q: /* Quit */
-    case GDK_Q:
+    case GDK_KEY_q: /* Quit */
+    case GDK_KEY_Q:
         gtk_main_quit ();
         break;
-    case GDK_n:
-    case GDK_N:
+    case GDK_KEY_n:
+    case GDK_KEY_N:
         /* Next image (if in slideshow/full mode). */
         slide_next (ui);
         break;
-    case GDK_p:
-    case GDK_P:
+    case GDK_KEY_p:
+    case GDK_KEY_P:
         /* Prev image (if in slideshow/full mode). */
         slide_prev (ui);      
         break;
-    case GDK_minus:
+    case GDK_KEY_minus:
         image_zoom (ui->image_data, -10);
         ui_window_update_image (ui);
         break;
-    case GDK_plus:
+    case GDK_KEY_plus:
         image_zoom (ui->image_data, 10);
         ui_window_update_image (ui);
         break;
-    case GDK_F11:
+    case GDK_KEY_F11:
         if (ui->is_fullscreen) {
             gtk_window_unfullscreen (ui->window);            
         } else {
