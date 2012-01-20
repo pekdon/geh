@@ -38,7 +38,7 @@ geh_SOURCES = dir.c dir.h \
 	ui_window.c ui_window.h \
 	util.c util.h \
 	main.c
-geh_CFLAGS = -DGTK_DISABLE_DEPRECATED
+geh_CFLAGS = -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGSEAL_ENABLE
 geh_LDADD = @GTK_LIBS@
 
 INCLUDES = @GTK_CFLAGS@

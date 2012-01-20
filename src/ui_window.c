@@ -694,6 +694,7 @@ callback_menu (GtkWidget *widget, GdkEvent *event)
 void
 callback_menu_zoom_fit (GtkMenuItem *item, gpointer data)
 {
+    GtkAllocation allocation;
     struct ui_window *ui = (struct ui_window*) data;
 
     /* Nothing to do as there is no image */
@@ -702,9 +703,8 @@ callback_menu_zoom_fit (GtkMenuItem *item, gpointer data)
     }
 
     /* Set zoom to available size */
-    image_zoom_fit (ui->image_data,
-                    GTK_WIDGET (ui->image_window)->allocation.width - 16,
-                    GTK_WIDGET (ui->image_window)->allocation.height - 16);
+    gtk_widget_get_allocation(GTK_WIDGET (ui->image_window), &allocation);
+    image_zoom_fit (ui->image_data, allocation.width - 16, allocation.height - 16);
 
     /* Update image displayed */
     ui_window_update_image (ui);
@@ -874,7 +874,7 @@ callback_menu_file_rename (GtkMenuItem *item, gpointer data)
     /* Add file name input */
     input = gtk_entry_new ();
     gtk_entry_set_text (GTK_ENTRY (input), file_multi_get_name (ui->file));
-    gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), input);
+    gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), input);
 
     gtk_widget_show_all (dialog);
 
