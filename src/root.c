@@ -338,13 +338,15 @@ root_image_create_filled (cairo_surface_t *surface, cairo_t *cr, GdkPixbuf *imag
 
 /**
  * Draws image on dest image tiled to fill area.
- *
- * @param dest GdkPixbuf destination.
- * @param image Pointer to GdkPixbuf to use as source for creating background.
  */
 void
 root_image_create_tiled (cairo_surface_t *surface, cairo_t *cr, GdkPixbuf *image)
 {
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-           "filled background mode is not yet supported");
+    guint dest_width = cairo_image_surface_get_width (surface);
+    guint dest_height = cairo_image_surface_get_height (surface);
+
+    gdk_cairo_set_source_pixbuf (cr, image, 0, 0);
+    cairo_pattern_set_extend (cairo_get_source (cr), CAIRO_EXTEND_REPEAT);
+    cairo_rectangle (cr, 0, 0, dest_width, dest_height);
+    cairo_fill (cr);
 }
