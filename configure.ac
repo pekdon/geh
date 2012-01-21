@@ -38,6 +38,16 @@ AC_STDC_HEADERS
 AC_HAVE_HEADERS(sys/types.h sys/stat.h unistd.h locale.h)
 
 dnl check required libraries
+AC_PATH_X
+AC_PATH_XTRA
+
+CFLAGS="$CFLAGS $X_FLAGS"
+LIBS="$LIBS $X_LIBS"
+LDFLAGS="$LDFLAGS $LIBS $X_PRE_LIBS"
+
+AC_CHECK_LIB(X11, XOpenDisplay, LIBS="$LIBS -lX11", AC_MSG_ERROR([Could not find XOpenDisplay in -lX11.]))
+
+dnl check required packages
 PKG_CHECK_MODULES([gtk3], [gtk+-3.0 >= 3.0.0], HAVE_GTK3=yes, HAVE_GTK3=no)
 if test "x$HAVE_GTK3" = "xyes"; then
     AC_DEFINE(HAVE_GTK3, [1], [define to 1 if you have gtk+-3.0])
