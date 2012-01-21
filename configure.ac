@@ -40,10 +40,18 @@ AC_HAVE_HEADERS(sys/types.h sys/stat.h unistd.h locale.h)
 dnl check required libraries
 PKG_CHECK_MODULES([gtk3], [gtk+-3.0 >= 3.0.0], HAVE_GTK3=yes, HAVE_GTK3=no)
 if test "x$HAVE_GTK3" = "xyes"; then
-   AC_DEFINE(HAVE_GTK3, [1], [define to 1 if you have gtk+-3.0])
+    AC_DEFINE(HAVE_GTK3, [1], [define to 1 if you have gtk+-3.0])
 else
-   AC_MSG_ERROR([Could not find gtk+-3.0 >= 3.0.0, required dependency.])
+    PKG_CHECK_MODULES([gtk2], [gtk+-2.0 >= 2.8.0], HAVE_GTK2=yes, HAVE_GTK2=no)
+    if test "x$HAVE_GTK2" = "xyes"; then
+       AC_DEFINE(HAVE_GTK2, [1], [define to 1 if you have gtk+-2.0])
+    else
+       AC_MSG_ERROR([Could not find gtk+-3.09 >= 3.0.0 or gtk+-2.0 >= 2.8.0, required dependency.])
+    fi
 fi
+
+AM_CONDITIONAL(GTK3, test x$HAVE_GTK3 = xyes)
+AM_CONDITIONAL(GTK2, test x$HAVE_GTK2 = xyes)
 
 dnl output makefiles
 AC_OUTPUT(Makefile doc/Makefile src/Makefile)

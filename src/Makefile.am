@@ -40,9 +40,14 @@ geh_SOURCES = dir.c dir.h \
 	util.c util.h \
 	main.c
 geh_CFLAGS = -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGSEAL_ENABLE
-geh_LDADD = @gtk3_LIBS@
 
+if GTK3
+geh_LDADD = @gtk3_LIBS@
 INCLUDES = @gtk3_CFLAGS@
+else
+geh_LDADD = @gtk2_LIBS@
+INCLUDES = @gtk2_CFLAGS@
+endif
 
 distclean-local:
 	rm -f *\~ .\#*

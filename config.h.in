@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* define to 1 if you have gtk+-2.0 */
+#undef HAVE_GTK2
+
 /* define to 1 if you have gtk+-3.0 */
 #undef HAVE_GTK3
 
