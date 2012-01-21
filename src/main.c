@@ -51,7 +51,7 @@ struct _options options = {
     NULL /* mode_str */,
     0 /* timeout */,
     FALSE /* win_nodecor */,
-    760 /* win_width */,
+    820 /* win_width */,
     740 /* win_height */,
     FALSE /* root */,
     ROOT_MODE_CENTER /* root_mode */,

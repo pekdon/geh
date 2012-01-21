@@ -49,7 +49,7 @@
 
 #define UI_THUMB_PADDING 8
 #define UI_THUMB_CHARS 14
-#define UI_SLIDE_PADDING 44
+#define UI_SLIDE_PADDING 84
 
 /**
  * Struct defining UI window.
@@ -96,8 +96,7 @@ extern void ui_window_set_image (struct ui_window *ui, struct file_multi *file,
                                  gboolean zoom_fit, gboolean lock);
 
 extern void ui_window_add_thumbnail (struct ui_window *ui,
-                                     struct file_multi *file, GdkPixbuf *pix,
-                                     gboolean lock);
+                                     struct file_multi *file, GdkPixbuf *pix);
 extern void ui_window_clear_thumbnails (struct ui_window *ui);
 
 extern void ui_window_progress_show (struct ui_window *ui, gboolean lock);

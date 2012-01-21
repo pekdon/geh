@@ -284,7 +284,7 @@ file_fetch_progress (struct file_fetch *file_fetch,
     /* Always add thumbnail version so switching of modes is possible. */
     thumb =  thumb_get (file, options.thumb_side, TRUE);
     if (thumb) {
-        ui_window_add_thumbnail (file_fetch->ui, file, thumb, TRUE /* lock */);
+        ui_window_add_thumbnail (file_fetch->ui, file, thumb);
     }
     ui_window_progress_progress (file_fetch->ui,
                                  1 /* count */, TRUE /* lock */);

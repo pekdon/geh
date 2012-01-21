@@ -260,39 +260,36 @@ root_image_create_base (cairo_surface_t **surface_ret, cairo_t **cr_ret, const g
 
 /**
  * Draws image centered on dest.
- *
- * @param dest GdkPixbuf destination.
- * @param image Pointer to GdkPixbuf to use as source for drawing background.
  */
 void
 root_image_create_centered (cairo_surface_t *surface, cairo_t *cr, GdkPixbuf *image)
 {
     gint src_x = 0, src_y = 0;
-    gint dest_x = 0, dest_y = 0;
+    gint dst_x = 0, dst_y = 0;
     guint src_width = gdk_pixbuf_get_width (image);
     guint src_height = gdk_pixbuf_get_height (image);
-    guint dest_width = cairo_image_surface_get_width (surface);
-    guint dest_height = cairo_image_surface_get_height (surface);
+    guint dst_width = cairo_image_surface_get_width (surface);
+    guint dst_height = cairo_image_surface_get_height (surface);
 
     /* Make sure copying fits into destination. */
-    if (src_width > dest_width) {
-        src_x = (src_width - dest_width) / 2;
+    if (src_width > dst_width) {
+        src_x = (src_width - dst_width) / 2;
     } else {
-        dest_x = (dest_width - src_width) / 2;
+        dst_x = (dst_width - src_width) / 2;
     }
-    if (src_height > dest_height) {
-        src_y = (src_height - dest_height) / 2;
+    if (src_height > dst_height) {
+        src_y = (src_height - dst_height) / 2;
     } else {
-        dest_y = (dest_height - src_height) / 2;
+        dst_y = (dst_height - src_height) / 2;
     }
 
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
            "copying image of size %dx%d+%d+%d centered on %dx%d+%d+%d",
            src_width, src_height, src_x, src_y,
-           dest_width, dest_height, dest_x, dest_y);
+           dst_width, dst_height, dst_x, dst_y);
 
     gdk_cairo_set_source_pixbuf (cr, image, src_x, src_y);
-    cairo_rectangle (cr, dest_x, dest_y, MIN(dest_width, src_width), MIN(dest_height, src_height));
+    cairo_rectangle (cr, dst_x, dst_y, MIN(dst_width, src_width), MIN(dst_height, src_height));
     cairo_fill (cr);
 }
 
@@ -327,12 +324,12 @@ root_image_create_filled (cairo_surface_t *surface, cairo_t *cr, GdkPixbuf *imag
 {
     guint src_width = gdk_pixbuf_get_width (image);
     guint src_height = gdk_pixbuf_get_height (image);
-    guint dest_width = cairo_image_surface_get_width (surface);
-    guint dest_height = cairo_image_surface_get_height (surface);
+    guint dst_width = cairo_image_surface_get_width (surface);
+    guint dst_height = cairo_image_surface_get_height (surface);
 
-    gdk_cairo_set_source_pixbuf (cr, image, 0, 0);    
-    cairo_scale (cr, (gdouble) dest_width / src_width, (gdouble) dest_height / src_height);
-    cairo_rectangle (cr, 0, 0, dest_width, dest_height);
+    cairo_scale (cr, (gdouble) dst_width / src_width, (gdouble) dst_height / src_height);
+    gdk_cairo_set_source_pixbuf (cr, image, 0, 0);
+    cairo_rectangle (cr, 0, 0, dst_width, dst_height);
     cairo_fill (cr);
 }
 
@@ -342,11 +339,11 @@ root_image_create_filled (cairo_surface_t *surface, cairo_t *cr, GdkPixbuf *imag
 void
 root_image_create_tiled (cairo_surface_t *surface, cairo_t *cr, GdkPixbuf *image)
 {
-    guint dest_width = cairo_image_surface_get_width (surface);
-    guint dest_height = cairo_image_surface_get_height (surface);
+    guint dst_width = cairo_image_surface_get_width (surface);
+    guint dst_height = cairo_image_surface_get_height (surface);
 
     gdk_cairo_set_source_pixbuf (cr, image, 0, 0);
     cairo_pattern_set_extend (cairo_get_source (cr), CAIRO_EXTEND_REPEAT);
-    cairo_rectangle (cr, 0, 0, dest_width, dest_height);
+    cairo_rectangle (cr, 0, 0, dst_width, dst_height);
     cairo_fill (cr);
 }

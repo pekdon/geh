@@ -241,6 +241,8 @@ ui_window_set_mode (struct ui_window *ui, guint mode)
 {
     gint max_pos, pane_pos = 0;
     gint policy_h = GTK_POLICY_AUTOMATIC, policy_v = GTK_POLICY_AUTOMATIC;
+    GList *selection;
+    GtkTreePath *tree_path;
 
     g_assert (ui);
 
@@ -255,7 +257,6 @@ ui_window_set_mode (struct ui_window *ui, guint mode)
         /* Slide-show mode, having a thumbnail height bottom border
            with icons */
         pane_pos = max_pos - options.thumb_side - UI_SLIDE_PADDING;
-
         /* Set columns to display in thumbnail mode */
         gtk_icon_view_set_columns (ui->icon_view, ui->thumbnails); 
         policy_h = GTK_POLICY_ALWAYS;
@@ -269,10 +270,19 @@ ui_window_set_mode (struct ui_window *ui, guint mode)
 
     gtk_paned_set_position (ui->pane, pane_pos);
 
-    /* Set scroll policy. 
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (ui->icon_view_window),
-                                    policy_h, policy_v);
-    */
+    /* Re-focus thumbnail image to currently displayed image if any. */
+    selection = gtk_icon_view_get_selected_items(ui->icon_view);
+    if (selection != NULL) {
+        if (selection->data != NULL) {
+            /* For some reason scroll_to_path has to be called twice to
+               work on my setup. */
+            tree_path = (GtkTreePath*) selection->data;
+            gtk_icon_view_scroll_to_path (ui->icon_view, tree_path, TRUE, 0.5, 0.5);
+            gtk_icon_view_scroll_to_path (ui->icon_view, tree_path, TRUE, 0.5, 0.5);
+        }
+        g_list_foreach (selection, (GFunc)gtk_tree_path_free, NULL);
+        g_list_free (selection);
+    }
 
     /* Store mode */
     ui->mode = mode;
@@ -341,8 +351,7 @@ ui_window_set_image (struct ui_window *ui, struct file_multi *file,
  * @param pix Pointer to GdkPixbuf to add.
  */
 void
-ui_window_add_thumbnail (struct ui_window *ui, struct file_multi *file,
-                         GdkPixbuf *pix, gboolean lock)
+ui_window_add_thumbnail (struct ui_window *ui, struct file_multi *file, GdkPixbuf *pix)
 {
     gchar *name_short;
     const gchar *name;
@@ -350,9 +359,7 @@ ui_window_add_thumbnail (struct ui_window *ui, struct file_multi *file,
     g_assert (ui);
 
     /* Thread safety */
-    if (lock) {
-        gdk_threads_enter ();
-    }
+    gdk_threads_enter ();
 
     /* Set correct amount of columns */
     ui->thumbnails++;
@@ -375,9 +382,7 @@ ui_window_add_thumbnail (struct ui_window *ui, struct file_multi *file,
                         UI_ICON_STORE_NAME, name,
                         UI_ICON_STORE_THUMB, pix, -1);
 
-    if (lock) {
-        gdk_threads_leave ();
-    }
+    gdk_threads_leave ();
 }
 
 /**
@@ -579,7 +584,7 @@ callback_image (GtkIconView *icon_view, GtkTreePath *tree_path, gpointer data)
     gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
                         UI_ICON_STORE_FILE, &file, -1);
 
-    /* Activate image */
+    /* Activate image and ensure that thumbnail being visible */
     ui_window_set_image (ui, file, TRUE, FALSE);
 }
 
