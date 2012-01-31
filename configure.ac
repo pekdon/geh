@@ -48,8 +48,18 @@ LDFLAGS="$LDFLAGS $LIBS $X_PRE_LIBS"
 AC_CHECK_LIB(X11, XOpenDisplay, LIBS="$LIBS -lX11", AC_MSG_ERROR([Could not find XOpenDisplay in -lX11.]))
 
 dnl check required packages
+AC_MSG_CHECKING([whether to build with Gtk2 instead of Gtk3])
+AC_ARG_ENABLE(gtk2,
+              AC_HELP_STRING([--enable-gtk2], [enable Gtk2 instead of Gkt3 [default=no]]),
+              , [enable_gtk2=no])
+if test "x$enable_gtk2" = "xyes"; then
+    AC_MSG_RESULT([yes])
+else
+    AC_MSG_RESULT([no])
+fi
+
 PKG_CHECK_MODULES([gtk3], [gtk+-3.0 >= 3.0.0], HAVE_GTK3=yes, HAVE_GTK3=no)
-if test "x$HAVE_GTK3" = "xyes"; then
+if test x${enable_gtk2}x${HAVE_GTK3} = xnoxyes; then
     AC_DEFINE(HAVE_GTK3, [1], [define to 1 if you have gtk+-3.0])
 else
     PKG_CHECK_MODULES([gtk2], [gtk+-2.0 >= 2.8.0], HAVE_GTK2=yes, HAVE_GTK2=no)
@@ -60,7 +70,7 @@ else
     fi
 fi
 
-AM_CONDITIONAL(GTK3, test x$HAVE_GTK3 = xyes)
+AM_CONDITIONAL(GTK3, test x${enable_gtk2}x${HAVE_GTK3} = xnoxyes)
 AM_CONDITIONAL(GTK2, test x$HAVE_GTK2 = xyes)
 
 dnl output makefiles
