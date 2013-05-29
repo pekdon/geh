@@ -261,7 +261,6 @@ void
 ui_window_set_mode (struct ui_window *ui, guint mode)
 {
     gint max_pos, pane_pos = 0;
-    gint policy_h = GTK_POLICY_AUTOMATIC, policy_v = GTK_POLICY_AUTOMATIC;
     GList *selection;
     GtkTreePath *tree_path;
 
@@ -280,13 +279,10 @@ ui_window_set_mode (struct ui_window *ui, guint mode)
         pane_pos = max_pos - options.thumb_side - UI_SLIDE_PADDING;
         /* Set columns to display in thumbnail mode */
         gtk_icon_view_set_columns (ui->icon_view, ui->thumbnails); 
-        policy_h = GTK_POLICY_ALWAYS;
-        policy_v = GTK_POLICY_NEVER;
 
     } else if (mode == UI_WINDOW_MODE_THUMB) {
         /* Set columns to display in thumbnail mode */
         gtk_icon_view_set_columns (ui->icon_view, -1);
-        policy_h = GTK_POLICY_NEVER;
     }
 
     gtk_paned_set_position (ui->pane, pane_pos);

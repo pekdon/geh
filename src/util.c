@@ -45,8 +45,8 @@
 const gchar*
 util_stripos (const gchar *haystack, const gchar *needle)
 {
-    gchar *haystack_up = g_strup (g_strdup (haystack));
-    gchar *needle_up = g_strup (g_strdup (needle));
+    gchar *haystack_up = g_ascii_strup (g_strdup (haystack), strlen (haystack));
+    gchar *needle_up = g_ascii_strup (g_strdup (needle), strlen (needle));
 
     const gchar *pos;
 
@@ -80,7 +80,7 @@ util_str_in (const gchar *str, gboolean casei, ...)
     va_start (ap, casei);
     while ((str_cmp = va_arg (ap, const gchar*)) != NULL) {
         if (casei) {
-            if (g_strcasecmp (str, str_cmp) == 0) {
+            if (g_ascii_strcasecmp (str, str_cmp) == 0) {
                 return TRUE;
             }
         } else {

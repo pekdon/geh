@@ -93,13 +93,13 @@ parse_str_options (void)
 {
     /* Get mode to use */
     if (options.mode_str) {
-        if (! g_strcasecmp ("THUMB", options.mode_str)) {
+        if (! g_ascii_strcasecmp ("THUMB", options.mode_str)) {
             options.mode = UI_WINDOW_MODE_THUMB;
-        } else if (! g_strcasecmp ("FULL", options.mode_str)) {
+        } else if (! g_ascii_strcasecmp ("FULL", options.mode_str)) {
             options.mode = UI_WINDOW_MODE_FULL;
-        } else if (! g_strcasecmp ("SLIDE", options.mode_str)) {
+        } else if (! g_ascii_strcasecmp ("SLIDE", options.mode_str)) {
             options.mode = UI_WINDOW_MODE_SLIDE;
-        } else if (! g_strcasecmp ("ROOT", options.mode_str)) {
+        } else if (! g_ascii_strcasecmp ("ROOT", options.mode_str)) {
             options.mode = -1;
         } else {
             g_warning ("invalid mode %s", options.mode_str);
@@ -109,15 +109,15 @@ parse_str_options (void)
 
     /* Get mode to use */
     if (options.root_mode_str) {
-        if (! g_strcasecmp ("CENTER", options.root_mode_str)) {
+        if (! g_ascii_strcasecmp ("CENTER", options.root_mode_str)) {
             options.root_mode = ROOT_MODE_CENTER;
-        } else if (! g_strcasecmp ("SCALE", options.root_mode_str)) {
+        } else if (! g_ascii_strcasecmp ("SCALE", options.root_mode_str)) {
             options.root_mode = ROOT_MODE_SCALE;
-        } else if (! g_strcasecmp ("CROP", options.root_mode_str)) {
+        } else if (! g_ascii_strcasecmp ("CROP", options.root_mode_str)) {
             options.root_mode = ROOT_MODE_CROP;
-        } else if (! g_strcasecmp ("FILL", options.root_mode_str)) {
+        } else if (! g_ascii_strcasecmp ("FILL", options.root_mode_str)) {
             options.root_mode = ROOT_MODE_FILL;
-        } else if (! g_strcasecmp ("TILE", options.root_mode_str)) {
+        } else if (! g_ascii_strcasecmp ("TILE", options.root_mode_str)) {
             options.root_mode = ROOT_MODE_TILE;
         } else {
             g_warning ("invalid root mode %s", options.root_mode_str);

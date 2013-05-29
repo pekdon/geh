@@ -78,7 +78,7 @@ root_image_set_image (struct file_multi *file, const gchar *color, guint mode)
     /* Load source file */
     image = gdk_pixbuf_new_from_file (file_multi_get_path (file), &err);
     if (!image || err) {
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, err->message);
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, "%s", err->message);
         g_free (err);
 
         return FALSE;
