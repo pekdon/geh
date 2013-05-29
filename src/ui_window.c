@@ -105,6 +105,7 @@ ui_window_new (void)
     ui->image_data = NULL;
     ui->progress_total = 0;
     ui->progress_step = 0.0;
+    ui->icon_iter.stamp = 0;
 
     /* Create main UI window */
     ui->window = GTK_WINDOW (gtk_window_new (GTK_WINDOW_TOPLEVEL));
@@ -1050,10 +1051,22 @@ ui_window_progress_add (gpointer data, gint count)
 void
 slide_next (struct ui_window *ui)
 {
+    gboolean set_image = TRUE;
     struct file_multi *file;
 
-    if (gtk_tree_model_iter_next (GTK_TREE_MODEL (ui->icon_store),
-                                  &ui->icon_iter)) {
+    if (ui->icon_iter.stamp == 0) {
+        set_image = FALSE;
+    } else {
+        set_image = gtk_tree_model_iter_next (
+            GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter);
+    }
+
+    if (! set_image) {
+        set_image = gtk_tree_model_get_iter_first(
+            GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter);
+    }
+
+    if (set_image) {
         gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
                             UI_ICON_STORE_FILE, &file, -1);
         ui_window_set_image (ui, file, TRUE, FALSE);        
@@ -1066,14 +1079,33 @@ slide_next (struct ui_window *ui)
 void
 slide_prev (struct ui_window *ui)
 {
+    int i;
+    gboolean set_image;
     struct file_multi *file;
     GtkTreePath *path;
 
-    path = gtk_tree_model_get_path (GTK_TREE_MODEL (ui->icon_store), 
-                                    &ui->icon_iter);
-    if (gtk_tree_path_prev (path)
-        && gtk_tree_model_get_iter (GTK_TREE_MODEL (ui->icon_store), 
-                                    &ui->icon_iter, path)) {
+    if (ui->icon_iter.stamp == 0) {
+        set_image = FALSE;
+    } else {
+        path = gtk_tree_model_get_path (GTK_TREE_MODEL (ui->icon_store), 
+                                        &ui->icon_iter);
+        set_image = gtk_tree_path_prev (path)
+            && gtk_tree_model_get_iter (GTK_TREE_MODEL (ui->icon_store), 
+                                        &ui->icon_iter, path);
+        gtk_tree_path_free(path);
+    }
+
+    if (! set_image) {
+        set_image = gtk_tree_model_get_iter_first(
+            GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter);        
+
+        for (i = 1; i < ui->thumbnails && set_image; i++ ) {
+            set_image = gtk_tree_model_iter_next (
+                GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter);
+        }
+    }
+
+    if (set_image) {
         gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
                             UI_ICON_STORE_FILE, &file, -1);
         ui_window_set_image (ui, file, TRUE, FALSE);        
