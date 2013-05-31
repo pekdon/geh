@@ -9,3 +9,21 @@ various nice features. It currently supports the following modes:
 
 For more information check out the geh project page at:
 https://projects.pekdon.net/projects/geh
+
+== Usage ==
+
+=== Keybindings ===
+
+ * f, zoom to fit.
+ * F, full mode showing only the current picture.
+ * s, slide mode showing a large picture and one row of thumbnails.
+ * S, open save picture dialog.
+ * R, open rename picture dialog.
+ * t T, thumbnail mode showing only thumbnails.
+ * q Q, quit.
+ * n N, show/select next image.
+ * p P, show/select previous image.
+ * +, zoom in current image.
+ * -, zoom out current image.
+ * F11, toggle fullscreen mode.
+
