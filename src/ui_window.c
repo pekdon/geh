@@ -123,8 +123,13 @@ ui_window_new (void)
                       G_CALLBACK (callback_key_press), ui);
 
     /* Create vertical box */
-    ui->vbox = GTK_VBOX (gtk_vbox_new (FALSE /* homogeneous */,
-                                       0 /* spacing */));
+#if GTK_CHECK_VERSION(3, 0, 0)
+    ui->vbox = GTK_BOX (gtk_box_new (GTK_ORIENTATION_VERTICAL, 0));
+    ui->pane = GTK_PANED (gtk_paned_new (GTK_ORIENTATION_VERTICAL));
+#else /* GTK < 3 */
+    ui->vbox = GTK_BOX (gtk_vbox_new (FALSE, 0));
+    ui->pane = GTK_PANED (gtk_vpaned_new ());
+#endif
 
     /* Create image area */
     ui->image_window = GTK_SCROLLED_WINDOW (gtk_scrolled_window_new (NULL, NULL));
@@ -172,9 +177,7 @@ ui_window_new (void)
     gtk_container_add (GTK_CONTAINER (ui->icon_view_window),
                        GTK_WIDGET (ui->icon_view));
 
-    /* Create and fill pane */
-    ui->pane = GTK_PANED (gtk_vpaned_new ());
-
+    /* Fill pane */
     gtk_paned_pack1 (ui->pane, GTK_WIDGET (ui->image_window),
                      TRUE /* resize */, TRUE /* shrink */);
 
