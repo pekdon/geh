@@ -278,7 +278,7 @@ file_fetch_progress (struct file_fetch *file_fetch,
 
         /* Single file mode, set image */
         ui_window_set_image (file_fetch->ui, file,
-                             TRUE /* zoom_fit */, TRUE /* lock */);
+                             file_fetch->ui->zoom_fit, TRUE /* lock */);
     }
 
     /* Always add thumbnail version so switching of modes is possible. */

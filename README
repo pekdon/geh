@@ -25,5 +25,6 @@ https://projects.pekdon.net/projects/geh
  * p P, show/select previous image.
  * +, zoom in current image.
  * -, zoom out current image.
+ * 0, zoom current image to original size.
  * F11, toggle fullscreen mode.
 

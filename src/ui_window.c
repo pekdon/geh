@@ -76,6 +76,7 @@ static void callback_icon_edited (GtkCellRendererText *cell,
 static gboolean idle_zoom_fit (gpointer data);
 
 static gboolean callback_menu (GtkWidget *widget, GdkEvent *event);
+static void callback_menu_zoom_orig (GtkMenuItem *item, gpointer data);
 static void callback_menu_zoom_fit (GtkMenuItem *item, gpointer data);
 static void callback_menu_zoom_in (GtkMenuItem *item, gpointer data);
 static void callback_menu_zoom_out (GtkMenuItem *item, gpointer data);
@@ -421,6 +422,13 @@ ui_window_create_menu (struct ui_window *ui)
     /* Create menu */
     menu = gtk_menu_new ();
 
+    /* Zoom Original */
+    item = gtk_menu_item_new_with_label ("Zoom Orig");
+    g_signal_connect (item, "activate",
+                      G_CALLBACK (callback_menu_zoom_orig), ui);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+
+
     /* Zoom fit */
     item = gtk_menu_item_new_with_label ("Zoom Fit");
     g_signal_connect (item, "activate",
@@ -524,6 +532,9 @@ callback_key_press (GtkWidget *widget, GdkEventKey *key, gpointer data)
     struct ui_window *ui = (struct ui_window*) data;
 
     switch (key->keyval) {
+    case GDK_KEY_0:
+        callback_menu_zoom_orig (NULL, ui);
+        break;
     case GDK_KEY_f:
         callback_menu_zoom_fit (NULL, ui);
         break;
@@ -606,7 +617,7 @@ callback_image (GtkIconView *icon_view, GtkTreePath *tree_path, gpointer data)
                         UI_ICON_STORE_FILE, &file, -1);
 
     /* Activate image and ensure that thumbnail being visible */
-    ui_window_set_image (ui, file, TRUE, FALSE);
+    ui_window_set_image (ui, file, ui->zoom_fit, FALSE);
 }
 
 /**
@@ -710,6 +721,30 @@ callback_menu (GtkWidget *widget, GdkEvent *event)
 
     return FALSE;
 }
+
+/**
+ * Zooms image to its original size.
+ *
+ * @param item Menu item that was activated.
+ * @param data void pointer to struct ui_window.
+ */
+void
+callback_menu_zoom_orig (GtkMenuItem *item, gpointer data)
+{
+    struct ui_window *ui = (struct ui_window*) data;
+
+    /* Nothing to do as there is no image */
+    if (! ui->image_data) {
+        return;
+    }
+
+    /* Set zoom to available size */
+    image_zoom_set (ui->image_data, 100);
+
+    /* Update image displayed */
+    ui_window_update_image (ui);
+}
+
 
 /**
  * Zooms image to fit window.
@@ -1069,7 +1104,7 @@ slide_next (struct ui_window *ui)
     if (set_image) {
         gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
                             UI_ICON_STORE_FILE, &file, -1);
-        ui_window_set_image (ui, file, TRUE, FALSE);        
+        ui_window_set_image (ui, file, ui->zoom_fit, FALSE);        
     }
 }
 
@@ -1108,6 +1143,6 @@ slide_prev (struct ui_window *ui)
     if (set_image) {
         gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
                             UI_ICON_STORE_FILE, &file, -1);
-        ui_window_set_image (ui, file, TRUE, FALSE);        
+        ui_window_set_image (ui, file, ui->zoom_fit, FALSE);        
     }
 }
