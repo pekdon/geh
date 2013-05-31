@@ -36,18 +36,6 @@
 #include <gtk/gtk.h>
 
 /**
- * Enum containing valid root image modes
- */
-enum {
-    ROOT_MODE_CENTER, /**< Center image on display */
-    ROOT_MODE_SCALE, /**< Scale image, preserving aspect */
-    ROOT_MODE_CROP, /**< Scale image, preserving ratio (filling screen) */
-    ROOT_MODE_FILL, /**< Scale image, not preserving ratio (filling screen) */
-    ROOT_MODE_TILE, /**< Tile image. */
-    ROOT_MODE_NONE /**< Invalid mode marker */
-};
-
-/**
  * Option structure containing global options.
  */
 struct _options {
@@ -61,10 +49,7 @@ struct _options {
     gint win_width; /**< Width of window. */
     gint win_height; /**< Width of window. */
 
-    gboolean root; /**< Root flag. */
-    guint root_mode; /**< Root mode internal representation. */
-    gchar *root_mode_str; /**< Root image mode. */
-    gchar *root_color; /**< Root background color. */
+    gboolean keep_size; /**< If true, do not zoom image to fit when changing. */
     guint thumb_side; /**< Maximum size of thumbnail in pixels. */
 
     gboolean recursive; /**< Recursive directory scanning. */

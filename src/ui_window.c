@@ -42,6 +42,7 @@
 
 /* Compatibility with older gtk+ versions */
 #ifndef GDK_KEY_f
+    #define GDK_KEY_0 GDK_0
     #define GDK_KEY_f GDK_f
     #define GDK_KEY_F GDK_F
     #define GDK_KEY_n GDK_n
