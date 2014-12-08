@@ -884,8 +884,8 @@ callback_menu_file_save (GtkMenuItem *item, gpointer data)
     /* Create save dialog and set current name to selected file name */
     dialog = gtk_file_chooser_dialog_new ("Save File", ui->window,
                                           GTK_FILE_CHOOSER_ACTION_SAVE,
-                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                          GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+                                          "Cancel", GTK_RESPONSE_CANCEL,
+                                          "Save", GTK_RESPONSE_ACCEPT,
                                           NULL);
     gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog),
                                                     TRUE);
@@ -928,8 +928,8 @@ callback_menu_file_rename (GtkMenuItem *item, gpointer data)
     /* Create rename dialog */
     dialog = gtk_dialog_new_with_buttons ("Rename File", ui->window,
                                           0 /* flags */,
-                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                          GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
+                                          "Cancel", GTK_RESPONSE_CANCEL,
+                                          "Ok", GTK_RESPONSE_ACCEPT,
                                           NULL);
 
     /* Add file name input */
