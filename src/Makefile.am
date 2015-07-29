@@ -34,6 +34,7 @@ geh_SOURCES = dir.c dir.h \
 	geh.h \
 	image.c image.h \
 	md5.c md5.h \
+	orientation.c orientation.h \
 	thumb.c thumb.h \
 	ui_window.c ui_window.h \
 	util.c util.h \

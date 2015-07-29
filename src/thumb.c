@@ -174,6 +174,13 @@ thumb_load (const gchar *path, struct thumb_image_info *info)
     thumb = gdk_pixbuf_loader_get_pixbuf (loader);
     g_object_ref (thumb);
 
+    const gchar *orientation = gdk_pixbuf_get_option(thumb, "orientation");
+    if (orientation != NULL) {
+        guint width = gdk_pixbuf_get_width (thumb);
+        guint height = gdk_pixbuf_get_height (thumb);
+        orientation_transform (&thumb, &width, &height, orientation);
+    }
+
     /* Clean resources */
     g_object_unref (loader);
 

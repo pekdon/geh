@@ -35,6 +35,7 @@
 #include <glib/gstdio.h>
 
 #include "image.h"
+#include "orientation.h"
 
 static void image_update (struct image *im);
 
@@ -65,18 +66,24 @@ image_open (const gchar *path)
         g_free (im);
         return NULL;
     }
-
+    
     im->width_orig = im->width_r_orig = gdk_pixbuf_get_width (im->pix_orig);
     im->height_orig = im->height_r_orig = gdk_pixbuf_get_height (im->pix_orig);
 
-    /* Setup current representation (original now) */
+    /* Update for orientation */
+    const gchar *orientation = gdk_pixbuf_get_option(im->pix_orig, "orientation");
+    if (orientation != NULL) {
+        orientation_transform (&im->pix_orig, &im->width_orig, &im->height_orig,
+                               orientation);
+    }
+
+    /* Setup current representation */
     im->pix_curr = gdk_pixbuf_copy (im->pix_orig);
     im->width_curr = im->width_orig;
     im->height_curr = im->height_orig;
-
     im->zoom = 100;
     im->rotation = 0;
-
+    
     return im;
 }
 
