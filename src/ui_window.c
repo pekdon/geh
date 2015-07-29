@@ -1104,6 +1104,13 @@ slide_next (struct ui_window *ui)
     if (set_image) {
         gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
                             UI_ICON_STORE_FILE, &file, -1);
+
+        /* Update selected item. */
+        GtkTreePath *path = gtk_tree_model_get_path (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter);
+        gtk_icon_view_select_path (ui->icon_view, path);
+        gtk_icon_view_scroll_to_path (ui->icon_view, path, FALSE, 0, 0);
+        gtk_tree_path_free (path);
+
         ui_window_set_image (ui, file, ui->zoom_fit, FALSE);        
     }
 }
@@ -1143,6 +1150,13 @@ slide_prev (struct ui_window *ui)
     if (set_image) {
         gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
                             UI_ICON_STORE_FILE, &file, -1);
+
+        /* Update selected item. */
+        GtkTreePath *path = gtk_tree_model_get_path (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter);
+        gtk_icon_view_select_path (ui->icon_view, path);
+        gtk_icon_view_scroll_to_path (ui->icon_view, path, FALSE, 0, 0);
+        gtk_tree_path_free (path);
+
         ui_window_set_image (ui, file, ui->zoom_fit, FALSE);        
     }
 }
