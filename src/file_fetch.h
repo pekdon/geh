@@ -49,7 +49,7 @@ struct file_fetch {
     GThreadPool *pool; /**< Thread pool fetching files. */
 
     GHashTable *hash; /**< Hash table of fetched files. */
-    GMutex *hash_mutex; /**< Mutex for hash. */
+    GMutex hash_mutex; /**< Mutex for hash. */
 
     gboolean stop; /**< Stop flag. */
 };

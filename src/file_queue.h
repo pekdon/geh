@@ -42,13 +42,13 @@
  */
 struct file_queue {
     GList *list; /**< List of files */
-    GMutex *list_mutex; /**< Lock for list of files */
+    GMutex list_mutex; /**< Lock for list of files */
 
     GAsyncQueue *queue; /**< Queue containing active files. */
 
     gint active; /**< Count of active objects. */
-    GMutex *active_mutex; /**< Lock for active count. */
-    GCond *active_cond; /**< Cond for active cout. */
+    GMutex active_mutex; /**< Lock for active count. */
+    GCond active_cond; /**< Cond for active cout. */
 
     gboolean stop; /**< Stop flag */
 };

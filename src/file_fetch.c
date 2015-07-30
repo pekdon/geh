@@ -70,14 +70,13 @@ file_fetch_start (struct file_queue *queue, GList *file_list,
 
     /* Create hash table for keeping track of fetched files */
     file_fetch->hash = g_hash_table_new (g_str_hash, g_str_equal);
-    file_fetch->hash_mutex = g_mutex_new ();
+    g_mutex_init(&file_fetch->hash_mutex);
 
     file_fetch->stop = FALSE;
 
     /* Start worker thread which starts thread pool */
-    file_fetch->thread = g_thread_create ((GThreadFunc) &file_fetch_worker,
-                                          file_fetch /* data */,
-                                          TRUE /* joinable */, NULL);
+    file_fetch->thread =
+        g_thread_new ("file_fetch_worker", (GThreadFunc) &file_fetch_worker, file_fetch);
 
     return file_fetch;
 }
@@ -104,6 +103,7 @@ file_fetch_stop (struct file_fetch *file_fetch)
 
     /* Free resources */
     g_hash_table_destroy (file_fetch->hash);
+    g_mutex_clear (&file_fetch->hash_mutex);
 }
 
 /**
@@ -130,13 +130,13 @@ file_fetch_worker (gpointer data)
     while (! file_fetch->stop
            && (file = file_queue_pop (file_fetch->queue)) != NULL) {
         if (file_multi_need_fetch (file)) {
-            g_mutex_lock (file_fetch->hash_mutex);
+            g_mutex_lock (&file_fetch->hash_mutex);
             if (! g_hash_table_lookup (file_fetch->hash,
                                        file_multi_get_path (file))) {
                 /* Fetch file if needed */
                 g_thread_pool_push (file_fetch->pool, (gpointer) file, NULL);
             }
-            g_mutex_unlock (file_fetch->hash_mutex);
+            g_mutex_unlock (&file_fetch->hash_mutex);
 
         } else {
             /* Do not always use the thread pool as it might block if mixing
@@ -174,7 +174,7 @@ file_fetch_file (gpointer data, gpointer user_data)
     images_total_before = images_total;
 
     /* Double check fetched file hash to avoid race */
-    g_mutex_lock (file_fetch->hash_mutex);
+    g_mutex_lock (&file_fetch->hash_mutex);
     if (g_hash_table_lookup (file_fetch->hash, file_multi_get_path (file))) {
         file = NULL;
     } else {
@@ -182,7 +182,7 @@ file_fetch_file (gpointer data, gpointer user_data)
                              (gpointer) file_multi_get_path (file),
                              (gpointer) file);
     }
-    g_mutex_unlock (file_fetch->hash_mutex);
+    g_mutex_unlock (&file_fetch->hash_mutex);
 
     /* File was already fetched, skip */
     if (file) {
@@ -242,7 +242,7 @@ file_fetch_enqueue_images (struct file_fetch *file_fetch, GList *images)
 
     /* Lock hash table, enqueue go through the list of images and move all
        entries not in the hash table. */
-    g_mutex_lock (file_fetch->hash_mutex);
+    g_mutex_lock (&file_fetch->hash_mutex);
     for (it = images; it; it = it->next) {
         if (! g_hash_table_lookup (file_fetch->hash, (gchar*) it->data)) {
             file_queue_push (file_fetch->queue,
@@ -251,7 +251,7 @@ file_fetch_enqueue_images (struct file_fetch *file_fetch, GList *images)
         }
         g_free (it->data);
     }
-    g_mutex_unlock (file_fetch->hash_mutex);
+    g_mutex_unlock (&file_fetch->hash_mutex);
 
     return added;
 }

@@ -73,8 +73,8 @@ dir_scan_start (struct file_queue *queue, gchar **files,
     ds->stop = FALSE;
 
     /* Start worker thread scanning directories and files */
-    ds->thread_work = g_thread_create ((GThreadFunc) &dir_scan_worker,
-                                       ds, TRUE, NULL);
+    ds->thread_work =
+        g_thread_new ("dir_scan_worker", (GThreadFunc) &dir_scan_worker, ds);
 
     return ds;
 }
