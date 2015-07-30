@@ -333,8 +333,7 @@ ui_window_set_image (struct ui_window *ui, struct file_multi *file,
     }
 
     /* Update title */
-    title = g_strdup_printf ("%s: %s",
-                             PACKAGE_NAME, file_multi_get_name (file));
+    title = g_strdup_printf ("geh: %s", file_multi_get_name (file));
     gtk_window_set_title (ui->window, title);
     g_free (title);
 

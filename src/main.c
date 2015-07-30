@@ -108,7 +108,7 @@ parse_str_options (void)
 void
 main_print_usage (void)
 {
-    g_fprintf (stderr, "Usage: %s [-bclmrst] [FILE]...\n", PACKAGE_NAME);
+    g_fprintf (stderr, "Usage: geh [-bclmrst] [FILE]...\n");
     g_fprintf (stderr, "Display images and set background image\n");
 }
 
