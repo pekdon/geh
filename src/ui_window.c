@@ -614,6 +614,7 @@ callback_image (GtkIconView *icon_view, GtkTreePath *tree_path, gpointer data)
                              &ui->icon_iter, tree_path);
     gtk_tree_model_get (GTK_TREE_MODEL (ui->icon_store), &ui->icon_iter,
                         UI_ICON_STORE_FILE, &file, -1);
+    gtk_icon_view_scroll_to_path (ui->icon_view, tree_path, FALSE, 0, 0);
 
     /* Activate image and ensure that thumbnail being visible */
     ui_window_set_image (ui, file, ui->zoom_fit, FALSE);
