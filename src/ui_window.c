@@ -374,9 +374,6 @@ ui_window_set_image (struct ui_window *ui, struct file_multi *file,
 void
 ui_window_add_thumbnail (struct ui_window *ui, struct file_multi *file, GdkPixbuf *pix)
 {
-    gchar *name_short;
-    const gchar *name;
-
     g_assert (ui);
 
     /* Thread safety */
@@ -390,10 +387,18 @@ ui_window_add_thumbnail (struct ui_window *ui, struct file_multi *file, GdkPixbu
 
 
     /* Limit length of name. */
-    name = file_multi_get_name (file);
-    if (strlen (name) > UI_THUMB_CHARS) {
-        name = name_short = g_strdup (name);
-        g_sprintf (name_short + UI_THUMB_CHARS - 4, "...");
+    gchar *name = g_strdup (file_multi_get_name (file));
+    if (g_utf8_validate (name, -1, NULL)) {
+        if (g_utf8_strlen (name, -1) > UI_THUMB_CHARS) {
+            int i;
+            gchar *p = name;
+            for (i = UI_THUMB_CHARS - 3; i > 0; i--) {
+                p = g_utf8_next_char (p);
+            }
+            g_sprintf (p, "...");
+        }
+    } else if (strlen (name) > UI_THUMB_CHARS) {
+        g_sprintf (name + UI_THUMB_CHARS - 4, "...");
     }
 
     /* Add thumbnail */
@@ -404,6 +409,8 @@ ui_window_add_thumbnail (struct ui_window *ui, struct file_multi *file, GdkPixbu
                         UI_ICON_STORE_THUMB, pix, -1);
 
     gdk_threads_leave ();
+
+    free (name);
 }
 
 /**
