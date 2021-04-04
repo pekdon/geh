@@ -11,6 +11,15 @@ various nice features. It currently supports the following modes:
 For more information check out the geh project page at:
 https://github.com/pekdon/geh
 
+```
+git clone https://github.com/pekdon/geh.git
+mkdir -p geh/build
+cd geh/build
+cmake ..
+make
+make install
+```
+
 ## Usage
 
 ### Keybindings
