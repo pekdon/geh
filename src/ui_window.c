@@ -1,5 +1,5 @@
 /*
- * Copyright © 2006 Claes Nästén <me@pekdon.net>
+ * Copyright (C) 2006-2021 Claes Nästén <pekdon@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
