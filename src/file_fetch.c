@@ -30,7 +30,6 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#include <gtk/gtk.h>
 #include <string.h>
 
 #include "geh.h"

@@ -84,8 +84,12 @@ struct ui_window {
   gdouble progress_step; /**< Fraction size to increment. */
 };
 
+extern void ui_init (int* argc, char*** argv);
+
 extern struct ui_window *ui_window_new (void);
 extern void ui_window_free (struct ui_window *ui);
+
+extern int ui_main (void);
 
 extern void ui_window_show (struct ui_window *ui);
 extern void ui_window_hide (struct ui_window *ui);

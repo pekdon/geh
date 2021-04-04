@@ -5,14 +5,15 @@
 #ifndef _ORIENTATION_H_
 #define _ORIENTATION_H_
 
-#include <gtk/gtk.h>
+#include <glib.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 /**
  * Image orientation.
  */
 enum orientation {
     TOP_LEFT_SIDE = 1, /* 0 */
-    TOP_RIGHT_SIDE = 2, /* 0, Mirrored. */ 
+    TOP_RIGHT_SIDE = 2, /* 0, Mirrored. */
     BOTTOM_RIGHT_SIDE = 3, /* 180 */
     BOTTOM_LEFT_SIDE = 4, /* 180, Mirrored. */
     LEFT_SIDE_TOP = 5, /* 90, Mirrored. */

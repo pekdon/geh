@@ -88,6 +88,13 @@ static void callback_menu_file_rename (GtkMenuItem *item, gpointer data);
 static void slide_next (struct ui_window *ui);
 static void slide_prev (struct ui_window *ui);
 
+void
+ui_init (int* argc, char*** argv)
+{
+    gdk_threads_init ();
+    gtk_init (argc, argv);
+}
+
 /**
  * Create new ui_window.
  */
@@ -227,6 +234,17 @@ ui_window_free (struct ui_window *ui)
     }
 
     g_free (ui);
+}
+
+/**
+ * UI main loop
+ */
+int
+ui_main (void)
+{
+    gdk_threads_enter ();
+    gtk_main ();
+    gdk_threads_leave ();
 }
 
 /**

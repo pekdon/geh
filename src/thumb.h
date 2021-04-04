@@ -33,7 +33,7 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#include <gtk/gtk.h>
+#include <glib.h>
 
 #include "file_multi.h"
 

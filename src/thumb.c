@@ -32,7 +32,7 @@
 
 #define THUMB_LOAD_CHUNK_SIZE 8192
 
-#include <gtk/gtk.h>
+#include <glib.h>
 #include <glib/gstdio.h>
 
 #include <sys/types.h>
@@ -44,6 +44,7 @@
 
 #include "file_multi.h"
 #include "md5.h"
+#include "orientation.h"
 #include "thumb.h"
 
 /**
@@ -169,7 +170,7 @@ thumb_load (const gchar *path, struct thumb_image_info *info)
 
         return NULL;
     }
-    
+
     /* Get thumbnail */
     thumb = gdk_pixbuf_loader_get_pixbuf (loader);
     g_object_ref (thumb);

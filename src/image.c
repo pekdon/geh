@@ -31,8 +31,9 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#include <gtk/gtk.h>
+#include <glib.h>
 #include <glib/gstdio.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include "image.h"
 #include "orientation.h"

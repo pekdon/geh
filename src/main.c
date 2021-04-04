@@ -30,7 +30,7 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H_H */
 
-#include <gtk/gtk.h>
+#include <glib.h>
 #include <glib/gstdio.h>
 #include <stdlib.h>
 #include <locale.h>
@@ -165,10 +165,7 @@ main (int argc, char *argv[])
         exit (1);
     }
 
-    /* Start with init threading, gdk, i18n and gtk */
-    gdk_threads_init ();
-
-    gtk_init (&argc, &argv);
+    ui_init (&argc, &argv);
 
     /* Create UI window */
     ui = ui_window_new ();
@@ -176,7 +173,7 @@ main (int argc, char *argv[])
 
     /* Fallback mode check */
     if (! options.mode_str) {
-        options.mode = (file_count > 1) 
+        options.mode = (file_count > 1)
             ? UI_WINDOW_MODE_SLIDE : UI_WINDOW_MODE_FULL;
     }
 
@@ -197,9 +194,7 @@ main (int argc, char *argv[])
     }
 
     /* Enter main loop */
-    gdk_threads_enter ();
-    gtk_main ();
-    gdk_threads_leave ();
+    ui_main ();
 
     /* Cleanup after fetching of files */
     dir_scan_stop (dir_scan);
