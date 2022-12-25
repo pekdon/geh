@@ -6,6 +6,8 @@ set(geh_VERSION_MINOR 4)
 set(geh_VERSION_PATCH 0)
 set(geh_VERSION "${geh_VERSION_MAJOR}.${geh_VERSION_MINOR}.${geh_VERSION_PATCH}")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 option(PREFER_GTK2 "Build with GTK2 even if GTK3 is available" OFF)
 
 # Look for dependencies
@@ -13,19 +15,19 @@ find_package(PkgConfig)
 pkg_check_modules(GTK3 gtk+-3.0)
 
 if (PREFER_GTK2 OR NOT GTK3_FOUND)
-  find_package(GTK2)
+	find_package(GTK2)
 endif (PREFER_GTK2 OR NOT GTK3_FOUND)
 
 if (GTK2_FOUND)
-  set(GTK_INCLUDE_DIRS ${GTK2_INCLUDE_DIRS})
-  set(GTK_LIBRARIES ${GTK2_LIBRARIES})
-  set(UI_TOOLKIT=GTK2)
+	set(GTK_INCLUDE_DIRS ${GTK2_INCLUDE_DIRS})
+	set(GTK_LINK_LIBRARIES ${GTK2_LINK_LIBRARIES})
+	set(UI_TOOLKIT=GTK2)
 elseif (GTK3_FOUND)
-  set(GTK_INCLUDE_DIRS ${GTK3_INCLUDE_DIRS})
-  set(GTK_LIBRARIES ${GTK3_LIBRARIES})
-  set(UI_TOOLKIT=GTK2)
+	set(GTK_INCLUDE_DIRS ${GTK3_INCLUDE_DIRS})
+	set(GTK_LINK_LIBRARIES ${GTK3_LINK_LIBRARIES})
+	set(UI_TOOLKIT=GTK3)
 else (GTK2_FOUND)
-  message(FATAL_ERROR "Either GTK2 or GTK3 is required" )
+	message(FATAL_ERROR "Either GTK2 or GTK3 is required" )
 endif (GTK2_FOUND)
 
 # Subdirectories
